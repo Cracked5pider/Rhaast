@@ -3,14 +3,18 @@
   <h1>Rhaast</h1>
   <br/>
 
-  <p><i>Rhaast feature rich, modern and modular rootkit</i></p>
-  <br />
+  <p><i>Rhaast is a feature rich, modern and modular rootkit</i></p>
+  <br/>
 
-  <img src="Data/Rhaast.png" width="90%" /><br />  
+  <img style="border-radius: 5%" src="Data/Rhaast.png" width="20%"/><br />  
 </div>
 
 Rhaast rootkit features: 
-    - hide process (via DKOM)
-    - hide TCP & UDP connections (wip)
-    - hide services 
-    - inject code into processes and hide it's artifacts 
+  - hide process
+  - hide TCP & UDP connections (wip)
+  - hide services (wip)
+  - hide memory (wip)
+  - inject code (wip)
+  - remove kernel callbacks (wip)
+
+and more.
