@@ -1,0 +1,23 @@
+﻿  Building 'Rhaast' with toolset 'WindowsKernelModeDriver10.0' and the 'Universal' target platform.
+C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(520,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
+  Stamping x64\Debug\Rhaast.inf
+  Stamping [Version] section with DriverVer=05/19/2023,16.56.38.865
+  Rhaast.vcxproj -> E:\Shared-Folder\Rhaast-build\Rhaast.sys
+  Done Adding Additional Store
+  Successfully signed: E:\Shared-Folder\Rhaast-build\Rhaast.sys
+  
+  Driver is 'Universal'.
+  .........................
+  Signability test complete.
+  
+  Errors:
+  None
+  
+  Warnings:
+  None
+  
+  Catalog generation complete.
+  E:\Shared-Folder\Rhaast-build\Rhaast\rhaast.cat
+  Done Adding Additional Store
+  Successfully signed: ..\..\..\Shared-Folder\Rhaast-build\Rhaast\rhaast.cat
+  
