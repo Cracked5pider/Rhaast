@@ -1,6 +1,6 @@
 <div align="center">
+  <img style="border-radius: 10%" src="Data/Rhaast.png" width="20%"/><br />  
   <h1>Rhaast</h1>
-  <img style="border-radius: 5%" src="Data/Rhaast.png" width="20%"/><br />  
   <br/>
   <p><i>Rhaast is a feature rich, modern and modular rootkit</i></p>
   <br/>
