@@ -11,18 +11,18 @@
 VOID DoubleLinkedRemove(
     PLIST_ENTRY Entry
 ) {
-	PLIST_ENTRY Prev = NULL;
-	PLIST_ENTRY Next = NULL;
+    PLIST_ENTRY Prev = NULL;
+    PLIST_ENTRY Next = NULL;
 
-	/* save current forward/backward links */
-	Next = Entry->Flink;
-	Prev = Entry->Blink;
+    /* save current forward/backward links */
+    Next = Entry->Flink;
+    Prev = Entry->Blink;
 
-	/* replace links */
-	Prev->Flink = Next;
-	Next->Blink = Prev;
+    /* replace links */
+    Prev->Flink = Next;
+    Next->Blink = Prev;
 
-	/* Re-write the current LIST_ENTRY to point to itself (avoiding BSOD) */
-	Entry->Blink = &Entry->Flink;
-	Entry->Flink = &Entry->Flink;
+    /* Re-write the current LIST_ENTRY to point to itself (avoiding BSOD) */
+    Entry->Blink = &Entry->Flink;
+    Entry->Flink = &Entry->Flink;
 }

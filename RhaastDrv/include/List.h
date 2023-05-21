@@ -3,5 +3,5 @@
 #include <Common.h>
 
 VOID DoubleLinkedRemove( 
-	PLIST_ENTRY Entry
+    PLIST_ENTRY Entry
 );

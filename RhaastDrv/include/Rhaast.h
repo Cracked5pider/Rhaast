@@ -12,15 +12,15 @@
 
 /* Driver Instance struct */
 typedef struct _INSTANCE {
-	/* driver main object */
-	PDRIVER_OBJECT  DriverObject;
-	PUNICODE_STRING RegistryPath;
+    /* driver main object */
+    PDRIVER_OBJECT  DriverObject;
+    PUNICODE_STRING RegistryPath;
 
-	/* Windows Build number */
-	ULONG WindowsBuild;
+    /* Windows Build number */
+    ULONG WindowsBuild;
 
-	/* linked list */
-	PPSHIDDEN_LIST PsHiddenList;
+    /* linked list */
+    PPSHIDDEN_LIST PsHiddenList;
 } INSTANCE, *PINSTANCE;
 
 /* defines */
@@ -31,13 +31,13 @@ DRIVER_UNLOAD     DriverUnload;
 extern INSTANCE Instance;
 
 NTSTATUS RhaastEntry(
-	VOID
+    VOID
 );
 
 NTSTATUS RhaastInit(
-	VOID
+    VOID
 );
 
 VOID RhaastUnLoad(
-	IN PDRIVER_OBJECT DriverObject
+    IN PDRIVER_OBJECT DriverObject
 ); 

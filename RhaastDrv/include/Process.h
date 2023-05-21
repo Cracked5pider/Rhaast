@@ -2,14 +2,14 @@
 
 #include <Common.h>
 
+NTSTATUS ProcessHide(
+    ULONG Pid
+);
+
 ULONG ProcessLockOffset(
-	VOID
+    VOID
 );
 
 ULONG ProcessActiveListOffset(
-	VOID
-);
-
-NTSTATUS ProcessHide(
-	ULONG Pid
+    VOID
 );
