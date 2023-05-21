@@ -9,7 +9,7 @@
  *	removed from the double linked list
  */
 VOID DoubleLinkedRemove(
-	PLIST_ENTRY Entry
+    PLIST_ENTRY Entry
 ) {
 	PLIST_ENTRY Prev = NULL;
 	PLIST_ENTRY Next = NULL;
