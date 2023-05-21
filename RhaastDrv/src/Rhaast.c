@@ -23,7 +23,7 @@ NTSTATUS RhaastEntry(
         " - Driver Name : %ls  \n",
         Instance.DriverObject->Type,
         Instance.DriverObject->DriverName.Buffer
-	)
+    )
 
     /* init driver and other resources/info */
     if ( ! NT_SUCCESS( NtStatus = RhaastInit() ) ) {

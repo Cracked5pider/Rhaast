@@ -31,9 +31,9 @@ NTSTATUS RsCallbacksUnRegister(
 }
 
 VOID RsCallbackOnProcessCreate(
-    IN OUT PEPROCESS				Process,
-    IN	   HANDLE					ProcessId,
-    IN OUT PPS_CREATE_NOTIFY_INFO	CreateInfo
+    IN OUT PEPROCESS                Process,
+    IN	   HANDLE                   ProcessId,
+    IN OUT PPS_CREATE_NOTIFY_INFO   CreateInfo
 ) {
     /* check if CreateInfo has been specified. 
      * if yes then it means that it's a new process */

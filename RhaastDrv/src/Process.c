@@ -6,12 +6,12 @@
 NTSTATUS ProcessHide(
     ULONG Pid
 ) {
-    PEPROCESS     EProcess	     = NULL;
-    NTSTATUS      NtStatus	     = STATUS_UNSUCCESSFUL;
+    PEPROCESS     EProcess       = NULL;
+    NTSTATUS      NtStatus       = STATUS_UNSUCCESSFUL;
     PLIST_ENTRY   ProcessActList = NULL;
     PVOID         ProcessLock    = NULL;
     ULONG         ProcessListOfs = 0;
-    ULONG	      ProcessLockOfs = 0;
+    ULONG         ProcessLockOfs = 0;
 
     /* resolve offsets */
     if ( ( ! ( ProcessLockOfs = ProcessLockOffset() ) ) || 

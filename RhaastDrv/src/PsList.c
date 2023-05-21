@@ -16,9 +16,9 @@ NTSTATUS PsListHiddenAdd(
     }
 
     /* set hidden process data */
-    PsHidden->Pid		   = Pid;
+    PsHidden->Pid          = Pid;
     PsHidden->ProcessEntry = ProcessEntry;
-    PsHidden->Next		   = Instance.PsHiddenList;
+    PsHidden->Next         = Instance.PsHiddenList;
 
     /* insert it into the global instance */
     Instance.PsHiddenList = PsHidden; 
