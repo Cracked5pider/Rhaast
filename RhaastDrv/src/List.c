@@ -2,11 +2,11 @@
 
 /**
  * @brief
- *		Remove/Unlink entry from linked list
+ *	Remove/Unlink entry from linked list
  *
- *	@param Entry
- *		double linked list entry to be
- *		removed from the double linked list
+ * @param Entry
+ *	double linked list entry to be
+ *	removed from the double linked list
  */
 VOID DoubleLinkedRemove(
 	PLIST_ENTRY Entry

