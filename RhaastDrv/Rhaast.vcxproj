@@ -95,6 +95,8 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>/INTEGRITYCHECK %(AdditionalOptions)</AdditionalOptions>
+      <TreatLinkerWarningAsErrors>false</TreatLinkerWarningAsErrors>
+      <AdditionalDependencies>netio.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -125,6 +127,7 @@
     <ClCompile Include="src\Process.c" />
     <ClCompile Include="src\PsList.c" />
     <ClCompile Include="src\Rhaast.c" />
+    <ClCompile Include="src\TransportIoCtl.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Callbacks.h" />
@@ -135,6 +138,8 @@
     <ClInclude Include="include\Process.h" />
     <ClInclude Include="include\PsList.h" />
     <ClInclude Include="include\Rhaast.h" />
+    <ClInclude Include="include\Transport.h" />
+    <ClInclude Include="include\TransportIoCtl.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

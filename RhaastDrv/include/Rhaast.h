@@ -9,6 +9,7 @@
 #include <Process.h>
 #include <PsList.h>
 #include <List.h>
+#include <Transport.h>
 
 /* Driver Instance struct */
 typedef struct _INSTANCE {

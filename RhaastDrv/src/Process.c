@@ -39,15 +39,6 @@ NTSTATUS ProcessHide(
         goto CLEANUP; 
     }
 
-    PRINTF(
-        "Process Hide: [Pid: %d] [EPROCESS: 0x%p]	    \n"
-        " - EPROCESS.ActiveProcessLinks :: 0x%x : 0x%p  \n"
-        " - EPROCESS.ProcessLock        :: 0x%x : 0x%p  \n",
-        Pid, EProcess,
-        ProcessListOfs, ProcessActList,
-        ProcessLockOfs, ProcessLock
-    )
-
     /* acquire ActiveProcessLinks lock */
     ExAcquirePushLockExclusive( ProcessLock );
 

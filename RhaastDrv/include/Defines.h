@@ -18,4 +18,9 @@
 #define WINBUILD_1121H2		22000
 #define WINBUILD_1122H2		22621
 
+/* rhaast memory pool tags */
 #define RS_POOL_TAG_PSHD	'DHsP'
+
+/* rhaast commands */
+#define RHAAST_COMMAND_PROCESS_HIDE     0x501
+#define RHAAST_COMMAND_PROCESS_UNHIDE   0x502   

