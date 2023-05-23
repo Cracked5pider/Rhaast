@@ -1,5 +1,10 @@
 #pragma once
 
+#define RHAAST_NAME         L"Rhaast"
+#define RHAAST_DRIVER_NAME  L"\\Driver\\" RHAAST_NAME
+#define RHAAST_DEVICE_NAME  L"\\Device\\" RHAAST_NAME
+#define RHAAST_SYMBOL_LINK  L"\\??\\"     RHAAST_NAME
+
 /* windows build numbers */
 #define WINBUILD_1507		10240
 #define WINBUILD_1511		10586

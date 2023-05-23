@@ -20,6 +20,9 @@ typedef struct _INSTANCE {
     /* Windows Build number */
     ULONG WindowsBuild;
 
+    /* device object created for I/O */
+    PDRIVER_OBJECT DeviceObject;
+
     /* linked list */
     PPSHIDDEN_LIST PsHiddenList;
 } INSTANCE, *PINSTANCE;

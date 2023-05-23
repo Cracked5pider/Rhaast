@@ -5,4 +5,9 @@
 
 typedef std::wstring WSTRING;
 
+typedef struct _BUFFER {
+    PVOID Buffer;
+    ULONG Length;
+} BUFFER, *PBUFFER;
+
 #endif

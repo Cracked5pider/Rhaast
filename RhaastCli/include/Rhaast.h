@@ -6,6 +6,7 @@
 #include <ntstatus.h>
 #include <winioctl.h>
 #include <ntdef.h>
+#include <psapi.h>
 
 /* import c++ headers */
 #include <iostream>
@@ -17,6 +18,7 @@
 #include <Types.h>
 #include <Command.h>
 #include <Utils.h>
+#include <Win32.h>
 
 /* import 3rd party headers */
 #include <lib/spdlog/spdlog.h>

