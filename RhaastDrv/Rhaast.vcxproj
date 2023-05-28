@@ -122,20 +122,22 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Callbacks.c" />
     <ClCompile Include="src\List.c" />
     <ClCompile Include="src\Main.c" />
+    <ClCompile Include="src\Memory.c" />
     <ClCompile Include="src\Process.c" />
     <ClCompile Include="src\PsList.c" />
     <ClCompile Include="src\Rhaast.c" />
     <ClCompile Include="src\TransportIoCtl.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\Callbacks.h" />
+    <ClInclude Include="include\Command.h" />
     <ClInclude Include="include\Common.h" />
     <ClInclude Include="include\Defines.h" />
     <ClInclude Include="include\List.h" />
     <ClInclude Include="include\Macros.h" />
+    <ClInclude Include="include\Memory.h" />
+    <ClInclude Include="include\MemoryVad.h" />
     <ClInclude Include="include\Process.h" />
     <ClInclude Include="include\PsList.h" />
     <ClInclude Include="include\Rhaast.h" />

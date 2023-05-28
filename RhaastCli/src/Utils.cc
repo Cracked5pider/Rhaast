@@ -1,7 +1,17 @@
 #include <Utils.h>
 
-bool StringIsNumber( const std::string& s )
-{
+bool StringIsHex(
+    std::string const& s
+) {
+    return s.compare(0, 2, "0x") == 0
+           && s.size() > 2
+           && s.find_first_not_of("0123456789abcdefABCDEF", 2) == std::string::npos;
+}
+
+
+bool StringIsNumber(
+    const std::string& s
+) {
     std::string::const_iterator it = s.begin();
     while ( it != s.end() && std::isdigit( *it ) ) ++it;
     return !s.empty() && it == s.end();

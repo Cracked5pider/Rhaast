@@ -11,11 +11,16 @@ typedef struct _PSHIDDEN_LIST
     struct _PSHIDDEN_LIST* Next;
 } PSHIDDEN_LIST, *PPSHIDDEN_LIST;
 
+BOOLEAN PsListHiddenCheck(
+    IN ULONG Pid
+);
+
 NTSTATUS PsListHiddenAdd(
-    ULONG       Pid,
-    PLIST_ENTRY ProcessEntry
+    IN ULONG       Pid,
+    IN PLIST_ENTRY ProcessEntry
 );
 
 NTSTATUS PsListHiddenRemove(
-    ULONG Pid
+    IN  ULONG        Pid,
+    OUT PLIST_ENTRY* ProcessEntry
 );

@@ -5,11 +5,12 @@
 /* import headers */
 #include <Macros.h>
 #include <Defines.h>
-#include <Callbacks.h>
 #include <Process.h>
 #include <PsList.h>
 #include <List.h>
 #include <Transport.h>
+#include <Memory.h>
+#include <Command.h>
 
 /* Driver Instance struct */
 typedef struct _INSTANCE {
@@ -25,6 +26,14 @@ typedef struct _INSTANCE {
 
     /* linked list */
     PPSHIDDEN_LIST PsHiddenList;
+
+    /* Offsets */
+    struct
+    {
+        ULONG64 ProcessLock;
+        ULONG64 ProcessActiveList;
+        ULONG64 ProcessVadRoot;
+    } Ofs;
 } INSTANCE, *PINSTANCE;
 
 /* defines */

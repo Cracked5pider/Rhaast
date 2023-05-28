@@ -3,13 +3,9 @@
 #include <Common.h>
 
 NTSTATUS ProcessHide(
-    ULONG Pid
+    IN ULONG Pid
 );
 
-ULONG ProcessLockOffset(
-    VOID
-);
-
-ULONG ProcessActiveListOffset(
-    VOID
+NTSTATUS ProcessUnHide(
+    IN ULONG Pid
 );

@@ -5,6 +5,10 @@
 #include <vector>
 #include <sstream>
 
+bool StringIsHex(
+    std::string const& s
+);
+
 bool StringIsNumber(
     const std::string& s
 );

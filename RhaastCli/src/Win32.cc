@@ -1,6 +1,5 @@
 #include <Rhaast.h>
 
-
 /*!
  * @brief
  *      query process name based on process id
@@ -67,5 +66,50 @@ END:
     }
 
     return Success;
+}
+
+/*!
+ * @brief
+ *      check if the specified pid exists
+ *
+ * @param Pid
+ *      Process Id to check
+ *
+ * @return
+ *      if specified process id exists
+ */
+BOOL ProcessCheckById(
+    IN ULONG Pid
+) {
+    PROCESSENTRY32 Pe32Entry = { sizeof( PROCESSENTRY32 ) };
+    HANDLE         Snapshot  = NULL;
+    BOOL           Result    = FALSE;
+    BOOL           Found     = FALSE;
+
+    /* create a snapshot */
+    if ( ( Snapshot = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 ) ) == INVALID_HANDLE_VALUE ) {
+        spdlog::error( "CreateToolhelp32Snapshot Failed: {}", GetLastError() );
+        goto CLEANUP;
+    }
+
+    Result = Process32First( Snapshot, &Pe32Entry );
+
+    do
+    {
+        /* check if is our process id */
+        if ( Pe32Entry.th32ProcessID == Pid ) {
+            Found = TRUE;
+            break;
+        }
+
+        Result = Process32Next( Snapshot, &Pe32Entry );
+    } while ( Result );
+
+CLEANUP:
+    if ( Snapshot ) {
+        CloseHandle( Snapshot );
+    }
+
+    return Found;
 }
 

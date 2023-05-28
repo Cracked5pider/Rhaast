@@ -7,6 +7,7 @@
 #include <winioctl.h>
 #include <ntdef.h>
 #include <psapi.h>
+#include <tlhelp32.h>
 
 /* import c++ headers */
 #include <iostream>

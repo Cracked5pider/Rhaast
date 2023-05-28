@@ -9,4 +9,8 @@ BOOL ProcessQueryNameById(
     OUT PBUFFER Name
 );
 
+BOOL ProcessCheckById(
+    IN ULONG Pid
+);
+
 #endif // RHAAST_WIN32_H

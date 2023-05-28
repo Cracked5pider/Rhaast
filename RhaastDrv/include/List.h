@@ -3,5 +3,10 @@
 #include <Common.h>
 
 VOID DoubleLinkedRemove( 
-    PLIST_ENTRY Entry
+    IN OUT PLIST_ENTRY Entry
+);
+
+VOID DoubleLinkedAdd(
+    IN OUT PLIST_ENTRY Main,
+    IN OUT PLIST_ENTRY Node
 );
