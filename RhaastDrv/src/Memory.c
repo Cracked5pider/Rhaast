@@ -1,9 +1,9 @@
 #include <Rhaast.h>
 
 TABLE_SEARCH_RESULT MemoryVadpFindNodeOrParent(
-    IN     PMM_AVL_TABLE      Table,
-    IN     ULONG_PTR          VpnStart,
-    IN OUT PMMVAD_SHORT*      NodeOrParent
+    _In_       PMM_AVL_TABLE      Table,
+    _In_       ULONG_PTR          VpnStart,
+    _In_ _Out_ PMMVAD_SHORT*      NodeOrParent
 );
 
 /**
@@ -24,9 +24,9 @@ TABLE_SEARCH_RESULT MemoryVadpFindNodeOrParent(
  *      status of function search 
  */
 NTSTATUS MemoryVadSearch(
-    IN  PEPROCESS     Process,
-    IN  ULONG_PTR     Address,
-    OUT PMMVAD*       MmVadEntry
+    _In_  PEPROCESS   Process,
+    _In_  ULONG_PTR   Address,
+    _Out_ PMMVAD*     MmVadEntry
 ) {
     NTSTATUS            NtStatus = STATUS_UNSUCCESSFUL;
     ULONG_PTR           VpnStart = 0;
@@ -34,7 +34,7 @@ NTSTATUS MemoryVadSearch(
     PRTL_BALANCED_LINKS VadNode  = NULL;
 
     /* check params */
-    if ( ( ! Process ) && ( ! MmVadEntry ) ) {
+    if ( ( ! Process ) || ( ! MmVadEntry ) ) {
         NtStatus = STATUS_INVALID_PARAMETER;
         goto END;
     }
@@ -59,13 +59,12 @@ END:
 
 /**
  * @brief
- *      Hides Virual address memory region
+ *      Hides Virtual address memory region
  *      from specified process by setting
  *      NO_ACCESS to Virtual Address or
  *      clear the filename buffer from mapped memories.
  *
- * @brief
- *      maybe instead try to unlink it from the Vad tree.
+ *      TODO: maybe instead try to unlink it from the Vad tree.
  *
  * @param Pid
  *      Process id to hide specified address
@@ -77,8 +76,8 @@ END:
  *      execution status of function
  */
 NTSTATUS MemoryVadHide(
-    IN ULONG     Pid,
-    IN ULONG_PTR Address
+    _In_ ULONG      Pid,
+    _In_ ULONG_PTR  Address
 ) {
     NTSTATUS     NtStatus   = STATUS_UNSUCCESSFUL;
     PEPROCESS    Process    = NULL;
@@ -140,7 +139,7 @@ NTSTATUS MemoryVadHide(
 
 CLEANUP:
     if ( Process ) {
-        ObfDereferenceObject( Process );
+        ObDereferenceObject( Process );
         Process = NULL;
     }
 
@@ -191,9 +190,9 @@ CLEANUP:
  *          the right child.
  */
 TABLE_SEARCH_RESULT MemoryVadpFindNodeOrParent(
-    IN     PMM_AVL_TABLE      Table,
-    IN     ULONG_PTR          VpnStart,
-    IN OUT PMMVAD_SHORT*      NodeOrParent
+    _In_       PMM_AVL_TABLE  Table,
+    _In_       ULONG_PTR      VpnStart,
+    _In_ _Out_ PMMVAD_SHORT*  NodeOrParent
 ) {
     PMMADDRESS_NODE Child         = NULL;
     PMMADDRESS_NODE NodeToExamine = NULL;

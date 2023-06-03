@@ -5,3 +5,4 @@
 #include <ntddk.h>
 #include <wsk.h>
 #include <stdint.h>
+#include <ntimage.h>

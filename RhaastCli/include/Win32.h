@@ -4,13 +4,9 @@
 #include <windows.h>
 #include <Types.h>
 
-BOOL ProcessQueryNameById(
-    IN  ULONG   Pid,
-    OUT PBUFFER Name
-);
-
 BOOL ProcessCheckById(
-    IN ULONG Pid
+    _In_      ULONG   Pid,
+    _Out_opt_ PBUFFER Name
 );
 
 #endif // RHAAST_WIN32_H

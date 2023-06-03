@@ -125,6 +125,8 @@
     <ClCompile Include="src\List.c" />
     <ClCompile Include="src\Main.c" />
     <ClCompile Include="src\Memory.c" />
+    <ClCompile Include="src\Native.c" />
+    <ClCompile Include="src\Callbacks.c" />
     <ClCompile Include="src\Process.c" />
     <ClCompile Include="src\PsList.c" />
     <ClCompile Include="src\Rhaast.c" />
@@ -138,6 +140,8 @@
     <ClInclude Include="include\Macros.h" />
     <ClInclude Include="include\Memory.h" />
     <ClInclude Include="include\MemoryVad.h" />
+    <ClInclude Include="include\Native.h" />
+    <ClInclude Include="include\Callbacks.h" />
     <ClInclude Include="include\Process.h" />
     <ClInclude Include="include\PsList.h" />
     <ClInclude Include="include\Rhaast.h" />

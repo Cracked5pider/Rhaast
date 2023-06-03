@@ -28,3 +28,17 @@
 /* rhaast memory pool tags */
 #define RS_POOL_TAG_PSHD	'DHsP'
 
+#define H_KEY 5381
+
+/* module hashes */
+#define H_MODULE_NTOSKRNL   0x9bf03a73
+
+/* function hashes */
+#define H_API_PSISPROTECTEDPROCESSLIGHT         0xe34e5025
+#define H_API_PSSETCREATEPROCESSNOTIFYROUTINE   0x7923f7e6
+
+/* x64 assembly instruction */
+#define ASM_RET  0xC3
+#define ASM_JMP  0xE9
+#define ASM_CALL 0xE8
+#define ASM_LEA  0x8D4C

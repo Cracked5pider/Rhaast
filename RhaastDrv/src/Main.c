@@ -5,8 +5,8 @@ INSTANCE Instance = { 0 };
 
 /* Driver entrypoint */
 NTSTATUS DriverEntry(
-    IN PDRIVER_OBJECT  DriverObject,
-    IN PUNICODE_STRING RegistryPath
+    _In_ PDRIVER_OBJECT  DriverObject,
+    _In_ PUNICODE_STRING RegistryPath
 ) {
     /* init instance */
     Instance.DriverObject = DriverObject; 

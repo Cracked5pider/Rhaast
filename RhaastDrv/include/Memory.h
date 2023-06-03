@@ -3,17 +3,17 @@
 #include <MemoryVad.h>
 
 NTSTATUS MemoryVadSearch(
-    IN  PEPROCESS     Process,
-    IN  ULONG_PTR     Address,
-    OUT PMMVAD*       MmVadEntry
+    _In_  PEPROCESS     Process,
+    _In_  ULONG_PTR     Address,
+    _Out_ PMMVAD*       MmVadEntry
 );
 
 NTSTATUS MemoryVadHide(
-    IN ULONG     Pid,
-    IN ULONG_PTR Address 
+    _In_ ULONG     Pid,
+    _In_ ULONG_PTR Address
 );
 
 NTSTATUS MemoryVadUnHide(
-    IN ULONG     Pid,
-    IN ULONG_PTR Address
+    _In_ ULONG     Pid,
+    _In_ ULONG_PTR Address
 );

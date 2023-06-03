@@ -1,11 +1,16 @@
 #pragma once
 
 #include <Common.h>
+#include <Command.h>
 
 NTSTATUS ProcessHide(
-    IN ULONG Pid
+    _In_ ULONG Pid
 );
 
 NTSTATUS ProcessUnHide(
-    IN ULONG Pid
+    _In_ ULONG Pid
+);
+
+NTSTATUS ProcessProtect(
+    _In_ PRS_C_PROCESS_PROTECTION Protection
 );

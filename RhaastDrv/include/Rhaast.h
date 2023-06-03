@@ -11,12 +11,16 @@
 #include <Transport.h>
 #include <Memory.h>
 #include <Command.h>
+#include <Native.h>
+#include <Callbacks.h>
 
 /* Driver Instance struct */
 typedef struct _INSTANCE {
     /* driver main object */
     PDRIVER_OBJECT  DriverObject;
     PUNICODE_STRING RegistryPath;
+
+    PVOID NtKrnlOs;
 
     /* Windows Build number */
     ULONG WindowsBuild;
@@ -33,6 +37,7 @@ typedef struct _INSTANCE {
         ULONG64 ProcessLock;
         ULONG64 ProcessActiveList;
         ULONG64 ProcessVadRoot;
+        ULONG64 ProcessProtection;
     } Ofs;
 } INSTANCE, *PINSTANCE;
 
@@ -52,5 +57,5 @@ NTSTATUS RhaastInit(
 );
 
 VOID RhaastUnLoad(
-    IN PDRIVER_OBJECT DriverObject
+    _In_ PDRIVER_OBJECT DriverObject
 ); 

