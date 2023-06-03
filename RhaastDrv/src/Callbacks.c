@@ -41,14 +41,12 @@ NTSTATUS RsCallbackQuery(
     SIZE_T   QuerySize = 0;
     PVOID    ArrayAddr = NULL;
 
-
-    if ( Type == PsCreationCallback ) {
-
+    if ( Type == PsCreationCallback ) 
+    {
         /* get array address */
         ArrayAddr = RspCallbackArray( Type );
 
         PRINTF( "ArrayAddr: %p\n", ArrayAddr );
-        
     }
 
 END:
@@ -101,11 +99,11 @@ PVOID RspCallbackArray(
          *
          * search for "PspSetCreateProcessNotifyRoutine" pointer
          */
-        for ( int i = 0; i < RSCB_MAX_INST_SEARCH; i++ ) {
-
+        for ( int i = 0; i < RSCB_MAX_INST_SEARCH; i++ ) 
+        {
             /* check if it's "call/jmp PspSetCreateProcessNotifyRoutine" */
-            if ( ( DREF_U8( U_PTR( Address ) + i ) == ASM_CALL ) || ( DREF_U8( U_PTR( Address ) + i ) == ASM_JMP ) ) {
-            
+            if ( ( DREF_U8( U_PTR( Address ) + i ) == ASM_CALL ) || ( DREF_U8( U_PTR( Address ) + i ) == ASM_JMP ) ) 
+            {
                 /* get offset of PspSetCreateProcessNotifyRoutine */
                 Offset = DREF_U32( U_PTR( Address ) + i + 1 );
                 
@@ -114,7 +112,6 @@ PVOID RspCallbackArray(
 
                 break;
             }
-
         }
 
         /*
@@ -131,22 +128,19 @@ PVOID RspCallbackArray(
          *
          * searching for the PspCreateProcessNotifyRoutine array address
          */
-        for ( int i = 0; i < RSCB_MAX_INST_SEARCH; i++ ) {
-
+        for ( int i = 0; i < RSCB_MAX_INST_SEARCH; i++ ) 
+        {
             /* check for "lea" instruction */
-            
-            if ( ( DREF_U16( U_PTR( Address ) + i ) == ASM_LEA ) ) {
-
-                DbgBreakPoint();
-
+            if ( ( DREF_U16( U_PTR( Address ) + i ) == ASM_LEA ) ) 
+            {
                 /* get offset of PspCreateProcessNotifyRoutine */
                 Offset = DREF_U32( U_PTR( Address ) + i + 3 );
 
                 /* get PspCreateProcessNotifyRoutine array address */
                 Address = C_PTR( U_PTR( Address ) + i + 7 + Offset );
 
+                break;
             }
-
         }
 
     }
