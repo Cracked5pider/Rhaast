@@ -62,6 +62,12 @@ private:
     );
 
 private:
+    VOID CallbackEnumList(
+        RS_CALLBACK_TYPE  Type,
+        PRS_CALLBACK_DATA Data
+    );
+
+private:
     BOOL RhaastConnect(
         std::string DriverName
     );
@@ -72,9 +78,11 @@ private:
     );
 
     NTSTATUS RhaastSend(
-        ULONG  Command,
-        PVOID  Buffer,
-        ULONG  Size
+        ULONG Command,
+        PVOID Buffer,
+        ULONG Size,
+        PVOID Response,
+        ULONG ResponseSize
     );
 
     VOID Exit(

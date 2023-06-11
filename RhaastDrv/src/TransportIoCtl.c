@@ -8,6 +8,8 @@ NTSTATUS TsIoCtlCreateClose(
     _In_ _Out_ PDEVICE_OBJECT DriverObject,
     _In_ _Out_ PIRP           Irp
 ) {
+    UNREFERENCED_PARAMETER( DriverObject );
+
     Irp->IoStatus.Status      = STATUS_SUCCESS;
     Irp->IoStatus.Information = 0;
 
@@ -216,8 +218,73 @@ NTSTATUS TsIoCtlDispatch(
             break; 
         }
 
+        case RHAAST_IOCTL_CALLBACK_QUERY: PUTS( "RHAAST_IOCTL_CALLBACK_QUERY" )
+        {
+            PRS_C_CALLBACK_QUERY CallbackQuery = NULL;
+            PRS_CALLBACK_DATA    CallbackData  = NULL;
+            ULONG                Size          = 0;
+
+            /* check if param has been specified */
+            if ( ! ( CallbackQuery = Irp->AssociatedIrp.SystemBuffer ) ) {
+                NtStatus = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
+            /* check data input size */
+            if ( IrpStack->Parameters.DeviceIoControl.InputBufferLength < sizeof( RS_C_CALLBACK_QUERY ) ) {
+                NtStatus = STATUS_INVALID_BUFFER_SIZE;
+                break;
+            }
+
+            if ( ! CallbackQuery->Size )
+            {
+                /* only query size for now */
+                if ( ! NT_SUCCESS( NtStatus = RsCallbackQuery( CallbackQuery->Type, NULL, &CallbackQuery->Size ) ) ) {
+                    PRINTF( "Failed to query callbacks Type:[%d] Size:[%d]: %p\n", CallbackQuery->Type, CallbackQuery->Size, NtStatus )
+                    break; 
+                }
+                
+                Length += sizeof( RS_C_CALLBACK_QUERY );
+            }
+            else 
+            {
+                /* allocate memory for callback list */
+                if ( ! ( CallbackData = ExAllocatePool2( POOL_FLAG_NON_PAGED, CallbackQuery->Size, RS_POOL_TAG_RHST ) ) ) {
+                    PUTS( "Failed to allocate memory for CallbackData" )
+                    NtStatus = STATUS_INSUFFICIENT_RESOURCES;
+                    goto CB_CLEANUP;
+                }
+
+                /* query callback list */
+                if ( ! NT_SUCCESS( NtStatus = RsCallbackQuery( CallbackQuery->Type, CallbackData, &Size ) ) ) {
+                    PRINTF( "Failed to query callbacks Type:[%d] Size:[%d]: %p\n", CallbackQuery->Type, CallbackQuery->Size, NtStatus )
+                    goto CB_CLEANUP;
+                }
+
+                PRINTF( "Queried callbacks size:[%d]\n", Size )
+
+                if ( CallbackQuery->Size != Size ) {
+                    PRINTF( "Query Size:[%d] != Size:[%d]\n", CallbackQuery->Size, Size )
+                    NtStatus = STATUS_INFO_LENGTH_MISMATCH;
+                    goto CB_CLEANUP;
+                }
+                
+                /* copy over the  */
+                RtlCopyMemory( Irp->AssociatedIrp.SystemBuffer, CallbackData, Size );
+                Length += Size;
+
+            CB_CLEANUP:
+                if ( CallbackData ) {
+                    ExFreePool2( CallbackData, RS_POOL_TAG_RHST, NULL, 0 );
+                    CallbackData = NULL;
+                }
+            }
+
+            break; 
+        }
+
         default: {
-            NtStatus = STATUS_INVALID_PARAMETER;
+            NtStatus = STATUS_INVALID_DEVICE_REQUEST;
             Length   = 0;
         }
     }

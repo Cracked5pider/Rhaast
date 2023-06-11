@@ -175,6 +175,7 @@ NTSTATUS ProcessProtect(
 CLEANUP:
     if ( Process ) {
         ObDereferenceObject( Process );
+        Process = NULL;
     }
 
     return NtStatus;

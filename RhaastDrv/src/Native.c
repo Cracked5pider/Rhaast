@@ -18,7 +18,7 @@ ULONG64 RsHasher(
     _In_ PVOID String,
     _In_ ULONG Length
 ) {
-    ULONG  Hash = HASH_KEY;
+    ULONG  Hash = H_KEY;
     PUCHAR Ptr  = String;
     UCHAR  Chr  = 0;
 
@@ -169,3 +169,90 @@ ULONG_PTR RsUtilRoutineEnd(
     return Offset;
 
 }
+
+/**
+ * @brief
+ *      queries module list and get's base and name of
+ *      driver based on address and if it is in address range.
+ *
+ * @param Address
+ *      Address range to check
+ *
+ * @param DrvName
+ *      address to copy driver name to
+ *
+ * @param DrvBase
+ *      address to save driver base address
+ *
+ * @return
+ *      status of function
+ */
+NTSTATUS RsDrvNameBaseFromAddr(
+    _In_      PVOID  Address,
+    _Out_opt_ PCHAR* DrvName,
+    _Out_opt_ PVOID* DrvBase
+) {
+    NTSTATUS             NtStatus = STATUS_UNSUCCESSFUL;
+    PRTL_PROCESS_MODULES Modules  = NULL;
+    ULONG                Size     = 0;
+
+    if ( ! Address ) {
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    if ( ! Instance.Win32.ZwQuerySystemInformation ) {
+        return STATUS_INVALID_ADDRESS;
+    }
+
+    /* get size of module information to allocate */
+    if ( ( NtStatus = Instance.Win32.ZwQuerySystemInformation( SystemModuleInformation, NULL, 0, &Size ) ) == STATUS_INFO_LENGTH_MISMATCH ) {
+
+        /* loop til we get the correct size */
+        while ( NtStatus == STATUS_INFO_LENGTH_MISMATCH ) {
+
+            Size += 0x1000;
+            if ( ! ( Modules = ExAllocatePool2( POOL_FLAG_NON_PAGED, Size, RS_POOL_TAG_RHST ) ) ) {
+                goto CLEANUP;
+            }
+
+            /* query module info */
+            if ( ! NT_SUCCESS( NtStatus = Instance.Win32.ZwQuerySystemInformation( SystemModuleInformation, Modules, Size, &Size ) ) ) {
+                ExFreePool2( Modules, RS_POOL_TAG_RHST, NULL, 0 );
+                Modules = NULL;
+            }
+
+        }
+
+        NtStatus = STATUS_UNSUCCESSFUL;
+
+        /* iterate over queried modules */
+        for ( ULONG i = 0; i < Modules->NumberOfModules; i++ ) {
+
+            /* check specified address if it is in the range of the module */
+            if ( ( Address > Modules->Modules[ i ].ImageBase ) &&
+                 ( Address < C_PTR( U_PTR( Modules->Modules[ i ].ImageBase ) + Modules->Modules[ i ].ImageSize ) ) )
+            {
+                if ( DrvName ) {
+                    RtlCopyMemory( DrvName, Modules->Modules[ i ].FullPathName, sizeof( Modules->Modules[ i ].FullPathName ) );
+                }
+
+                if ( DrvBase ) {
+                    *DrvBase = Modules->Modules[ i ].ImageBase;
+                }
+
+                /* tell that we were successful */
+                NtStatus = STATUS_SUCCESS;
+
+                break; 
+            }
+        }
+    }
+
+CLEANUP:
+    if ( Modules ) {
+        ExFreePool2( Modules, RS_POOL_TAG_RHST, NULL, 0 );
+        Modules = NULL;
+    }
+
+    return NtStatus;
+} 

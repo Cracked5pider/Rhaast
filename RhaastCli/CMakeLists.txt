@@ -3,7 +3,8 @@ project( RhaastCli )
 
 set( CMAKE_CXX_STANDARD 17 )
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY E:\\Shared-Folder )
-set( CMAKE_CXX_FLAGS "-static -static-libgcc -static-libstdc++" )
+set( CMAKE_CXX_FLAGS "-static -static-libgcc -static-libstdc++ -fpermissive" )
+
 # include directory
 include_directories( include )
 

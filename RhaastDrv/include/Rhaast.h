@@ -13,6 +13,7 @@
 #include <Command.h>
 #include <Native.h>
 #include <Callbacks.h>
+#include <Types.h>
 
 /* Driver Instance struct */
 typedef struct _INSTANCE {
@@ -39,6 +40,16 @@ typedef struct _INSTANCE {
         ULONG64 ProcessVadRoot;
         ULONG64 ProcessProtection;
     } Ofs;
+
+    struct
+    {
+        NTSTATUS ( *ZwQuerySystemInformation ) (
+            _In_      SYSTEM_INFORMATION_CLASS SystemInformationClass,
+            _Inout_   PVOID                    SystemInformation,
+            _In_      ULONG                    SystemInformationLength,
+            _Out_opt_ PULONG                   ReturnLength
+        );
+    } Win32;
 } INSTANCE, *PINSTANCE;
 
 /* defines */

