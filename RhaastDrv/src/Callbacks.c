@@ -11,6 +11,74 @@ PVOID RspCallbackArray(
 
 /**
  * @brief
+ *      removes callback from specified type array/list
+ *
+ * @param Type
+ *      type of callback to remove
+ *
+ * @param Callback
+ *      callback to remove
+ *
+ * @return
+ *      status of function
+ */
+NTSTATUS RsCallbackRemove(
+    _In_ RS_CALLBACK_TYPE Type,
+    _In_ ULONG_PTR        Callback
+) {
+    PVOID     ArrayAddr  = NULL;
+    NTSTATUS  NtStatus   = STATUS_UNSUCCESSFUL;
+    ULONG_PTR Pointer    = NULL;
+
+    /* this type is not supported
+     * TODO: implement for Driver verification */
+    if ( Type == NoneCallback || Type == DriverVerificationCallback ) {
+        NtStatus = STATUS_INVALID_PARAMETER;
+        goto END; 
+    }
+
+    /* get array/list address */
+    if ( ! ( ArrayAddr = RspCallbackArray( Type ) ) ) {
+        goto END;
+    }
+
+    if ( Type == PsProcessCreationCallback || 
+         Type == PsThreadCreationCallback  ||
+         Type == PsImageLoadCallback       )
+    {
+        /* iterate over notify array */
+        for ( int i = 0; i < RSCB_MAX_CALLBACKS; i++ )
+        {
+            if ( ( Pointer = DREF_UPTR( U_PTR( ArrayAddr ) + ( i * sizeof( UINT_PTR ) ) ) ) ) 
+            {
+                /* get the actual callback function
+                 * remove the last 4 bytes, jump over the first 8 */
+                Pointer &= ~( 1ULL << 3 ) + 0x1;
+                Pointer = DREF_UPTR( Pointer );
+
+                /* is it the callback we are searching for */
+                if ( Pointer == Callback ) 
+                {
+                    /* overwrite callback from array */
+                    *( ( PVOID* ) C_PTR( U_PTR( ArrayAddr ) + ( i * sizeof( UINT_PTR ) ) ) ) = NULL;
+
+                    /* end. we were successful */
+                    NtStatus = STATUS_SUCCESS;
+                    break; 
+                }
+            }
+        }
+        
+    } else {
+        NtStatus = STATUS_INVALID_PARAMETER;
+    }
+
+END:
+    return NtStatus;
+}
+
+/**
+ * @brief
  *      query list of registered callback
  *      from the specified callback type
  *
@@ -77,7 +145,9 @@ NTSTATUS RsCallbackQuery(
               Type == PsImageLoadCallback       )
     {
         /* get array address */
-        ArrayAddr = RspCallbackArray( Type );
+        if ( ! ( ArrayAddr = RspCallbackArray( Type ) ) ) {
+            return STATUS_UNSUCCESSFUL;
+        }
         
         for ( int i = 0; i < RSCB_MAX_CALLBACKS; i++ )
         {
@@ -118,7 +188,7 @@ NTSTATUS RsCallbackQuery(
         }
 
         ArrayAddr = DREF_PTR( ArrayAddr );
-        Callback  = ( ( PCALLBACK_OBJECT ) ( ArrayAddr ) )->RegisteredCallbacks.Flink;
+        Callback  = U_PTR( ( ( PCALLBACK_OBJECT ) ( ArrayAddr ) )->RegisteredCallbacks.Flink );
 
         /* iterate over linked list */
         do {

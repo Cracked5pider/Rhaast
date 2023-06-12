@@ -35,6 +35,11 @@ NTSTATUS RsCallbackQuery(
     _Out_      PULONG            Size
 );
 
+NTSTATUS RsCallbackRemove(
+    _In_ RS_CALLBACK_TYPE Type,
+    _In_ ULONG_PTR        Callback
+);
+
 NTSTATUS RsCallbackPatch(
     _In_ RS_CALLBACK_TYPE CallbackType
 );

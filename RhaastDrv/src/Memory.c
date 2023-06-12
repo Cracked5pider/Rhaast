@@ -8,6 +8,34 @@ TABLE_SEARCH_RESULT MemoryVadpFindNodeOrParent(
 
 /**
  * @brief
+ *      allocates memory
+ *
+ * @param Size
+ *      size of memory to allocate
+ *
+ * @return
+ *      pointer to allocated memory 
+ */
+PVOID RsMemAlloc(
+    _In_ SIZE_T Size
+) {
+    return ExAllocatePool2( POOL_FLAG_NON_PAGED, Size, RS_POOL_TAG_RHST );
+}
+
+/**
+ * @brief
+ *      free allocated memory
+ *
+ *
+ */
+VOID RsMemFree(
+    _In_ PVOID Memory
+) {
+    
+}
+
+/**
+ * @brief
  *      search for virtual address VAD entry
  *      in specified process
  *

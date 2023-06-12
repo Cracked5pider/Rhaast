@@ -211,13 +211,13 @@ NTSTATUS RsDrvNameBaseFromAddr(
         while ( NtStatus == STATUS_INFO_LENGTH_MISMATCH ) {
 
             Size += 0x1000;
-            if ( ! ( Modules = ExAllocatePool2( POOL_FLAG_NON_PAGED, Size, RS_POOL_TAG_RHST ) ) ) {
+            if ( ! ( Modules = RsMemAlloc( Size ) ) ) {
                 goto CLEANUP;
             }
 
             /* query module info */
             if ( ! NT_SUCCESS( NtStatus = Instance.Win32.ZwQuerySystemInformation( SystemModuleInformation, Modules, Size, &Size ) ) ) {
-                ExFreePool2( Modules, RS_POOL_TAG_RHST, NULL, 0 );
+                RsMemFree( Modules );
                 Modules = NULL;
             }
 

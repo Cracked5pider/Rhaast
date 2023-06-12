@@ -29,6 +29,7 @@
 #define RS_POOL_TAG_RHST	'tshR'
 #define RS_POOL_TAG_PSHD	'DHsP'
 
+/* hash key */
 #define H_KEY 5381
 
 /* module hashes */

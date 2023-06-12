@@ -313,7 +313,7 @@ BOOL Rhaast::DispatchInput(
 
         /* check if arg is a hex string (address) */
         if ( ! StringIsHex( args[ 2 ] ) ) {
-            spdlog::error( "specified argument is not a number" );
+            spdlog::error( "specified argument is not an address" );
             FAIL_END
         }
 
@@ -389,17 +389,102 @@ BOOL Rhaast::DispatchInput(
                 /* print Driver Verification Notify routines */
                 spdlog::info( "" );
                 spdlog::info( "[DriverVerification] Driver Verification callbacks: " );
-                CallbackEnumList( DriverVerification, CallbackData );
+                CallbackEnumList( DriverVerificationCallback, CallbackData );
 
                 spdlog::info( "" );
 
             } else {
-                spdlog::error( "failed to query callback list size" );
+                spdlog::error( "failed to query callback list" );
             }
 
         } else {
             spdlog::error( "failed to query callback list size" );
         }
+
+    } else if ( args[ 0 ] == "callback::remove" ) {
+
+        RS_C_CALLBACK_REMOVE Remove       = { };
+        RS_CALLBACK_DATA     CallbackData = { };
+
+        for ( int i = 0; i < args.size(); i++ )
+        {
+            if ( args[ i ] == "--type" ) {
+
+                auto type = std::string();
+
+                if ( args.size() < ( i + 1 ) ) {
+                    spdlog::error( "specify a callback type" );
+                    FAIL_END
+                }
+
+                type = args[ i + 1 ];
+
+                if ( type == "PsProcessCreation" ) {
+                    Remove.Type = PsProcessCreationCallback;
+                    continue;
+                } else if ( type == "PsThreadCreation" ) {
+                    Remove.Type = PsThreadCreationCallback;
+                    continue;
+                } else if ( type == "PsImageLoad" ) {
+                    Remove.Type = PsImageLoadCallback;
+                    continue;
+                } else {
+                    spdlog::error( "specified callback type not supported" );
+                    FAIL_END
+                }
+            }
+
+            if ( args[ i ] == "--callback" ) {
+
+                if ( args.size() < ( i + 1 ) ) {
+                    spdlog::error( "specify a callback address" );
+                    FAIL_END
+                }
+
+                if ( ! StringIsHex( args[ i + 1 ] ) ) {
+                    spdlog::error( "specified argument is not an address" );
+                    FAIL_END
+                }
+
+                Remove.Callback = std::stoull( args[ i + 1 ], nullptr, 16 );
+
+                continue;
+            }
+        }
+
+        /* send command to remove a callback */
+        if ( ( success = NT_SUCCESS( RhaastSend(
+            RHAAST_COMMAND_CALLBACK_REMOVE,
+            &Remove,
+            sizeof( Remove ),
+            &CallbackData,
+            sizeof( CallbackData )
+        ) ) ) ) {
+
+            auto type = std::string();
+
+            if ( CallbackData.Type == PsProcessCreationCallback ) {
+                type = "PsProcessCreation";
+            } else if ( CallbackData.Type == PsThreadCreationCallback ) {
+                type = "PsThreadCreation";
+            } else if ( CallbackData.Type == PsImageLoadCallback ) {
+                type = "PsImageLoad";
+            } else if ( CallbackData.Type == DriverVerificationCallback ) {
+                type = "DriverVerification";
+            } else {
+                spdlog::error( "received an invalid callback type: {}", CallbackData.Type );
+                FAIL_END
+            }
+
+            spdlog::info( "Callback Removed:       " );
+            spdlog::info( " - Type     : {}        ", type );
+            spdlog::info( " - Callback : {:p}      ", ( PVOID ) CallbackData.Callback );
+            spdlog::info( " - Location : {}+0x{:x} ", CallbackData.DriverName, CallbackData.Callback - CallbackData.DriverBase );
+
+        } else {
+            spdlog::error( "failed to query callback list" );
+        }
+
 
     } else {
 

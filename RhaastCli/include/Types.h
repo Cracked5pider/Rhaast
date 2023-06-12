@@ -44,7 +44,7 @@ typedef enum _RS_CALLBACK_TYPE
     PsProcessCreationCallback,
     PsThreadCreationCallback,
     PsImageLoadCallback,
-    DriverVerification
+    DriverVerificationCallback
 } RS_CALLBACK_TYPE, *PRS_CALLBACK_TYPE;
 
 typedef struct _RS_CALLBACK_DATA

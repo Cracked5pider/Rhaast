@@ -10,6 +10,7 @@
 #define RHAAST_COMMAND_MEMORY_VAD       0x503
 #define RHAAST_COMMAND_PROCESS_PROTECT  0x504
 #define RHAAST_COMMAND_CALLBACK_QUERY   0x505
+#define RHAAST_COMMAND_CALLBACK_REMOVE  0x506
 
 /* command data objects */
 typedef struct _RS_C_MEMORY_VAD
@@ -29,3 +30,9 @@ typedef struct _RS_C_CALLBACK_QUERY
     ULONG Type;
     ULONG Size;
 } RS_C_CALLBACK_QUERY, *PRS_C_CALLBACK_QUERY;
+
+typedef struct _RS_C_CALLBACK_REMOVE
+{
+    ULONG     Type;
+    ULONG_PTR Callback;
+} RS_C_CALLBACK_REMOVE, * PRS_C_CALLBACK_REMOVE;

