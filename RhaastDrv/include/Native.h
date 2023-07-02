@@ -24,3 +24,9 @@ PVOID RsLdrFunction(
 ULONG_PTR RsUtilRoutineEnd(
     _In_ PVOID Routine
 );
+
+NTSTATUS RsReadFile(
+    _In_      LPWSTR  Path,
+    _Out_opt_ PVOID   Buffer,
+    _Out_     PSIZE_T Size
+);

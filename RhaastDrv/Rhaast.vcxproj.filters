@@ -47,6 +47,9 @@
     <ClCompile Include="src\Callbacks.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Map.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Rhaast.h">
@@ -92,6 +95,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Map.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

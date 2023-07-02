@@ -325,6 +325,55 @@ NTSTATUS TsIoCtlDispatch(
             break; 
         }
 
+        case RHAAST_IOCTL_DRIVER_LOAD: PUTS( "RHAAST_IOCTL_DRIVER_LOAD" )
+        {
+            PRS_C_DRIVER_LOAD DriverLoad = NULL;
+            PVOID             DriverAddr = NULL;
+            SIZE_T            DriverSize = 0;
+
+            /* check if param has been specified */
+            if ( ! ( DriverLoad = Irp->AssociatedIrp.SystemBuffer ) ) {
+                NtStatus = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
+            /* check data input size */
+            if ( IrpStack->Parameters.DeviceIoControl.InputBufferLength < sizeof( RS_C_DRIVER_LOAD ) ) {
+                NtStatus = STATUS_INVALID_BUFFER_SIZE;
+                break;
+            }
+
+            /* first get required size for the driver to allocate */
+            if ( NT_SUCCESS( NtStatus = RsReadFile( DriverLoad->DriverPath, NULL, &DriverSize ) ) ) {
+
+                /* allocate driver buffer */
+                if ( ! ( DriverAddr = RsMemAlloc( DriverSize ) ) ) {
+                    NtStatus = STATUS_INSUFFICIENT_RESOURCES;
+                    break; 
+                }
+                
+                /* read file into buffer */
+                if ( NT_SUCCESS( NtStatus = RsReadFile( DriverLoad->DriverPath, DriverAddr, &DriverSize ) ) ) {
+
+                    /* map driver into memory */
+                    NtStatus = RsMapDriver( DriverAddr, ( PVOID ) & DriverLoad->DriverBase );
+
+                }
+            }
+            
+            Length             += sizeof( RS_C_DRIVER_LOAD );
+            DriverLoad->Status =  NtStatus;
+
+            /* free memory */
+            if ( DriverAddr ) {
+                RtlSecureZeroMemory( DriverAddr, DriverSize );
+                RsMemFree( DriverAddr );
+                DriverAddr = NULL;
+            }
+
+            break; 
+        }
+
         default: {
             NtStatus = STATUS_INVALID_DEVICE_REQUEST;
             Length   = 0;

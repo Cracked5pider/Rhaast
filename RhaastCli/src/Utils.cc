@@ -30,3 +30,17 @@ void StringTokenize(
         out.push_back(s);
     }
 }
+
+std::wstring StringAnsiToWide(
+    const std::string& str
+) {
+    int          count = 0;
+    std::wstring wstr  = {};
+
+    count = MultiByteToWideChar( CP_ACP, 0, str.c_str(), str.length(), NULL, 0 );
+    wstr  = std::wstring( count, 0 );
+
+    MultiByteToWideChar( CP_ACP, 0, str.c_str(), str.length(), &wstr[ 0 ], count );
+
+    return wstr;
+}

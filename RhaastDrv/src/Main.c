@@ -12,6 +12,6 @@ NTSTATUS DriverEntry(
     Instance.DriverObject = DriverObject; 
     Instance.RegistryPath = RegistryPath;
 
-    /* execute the main entrypoint of Rhaast */
+    /* execute the main entry point of Rhaast */
     return RhaastEntry( );
 }

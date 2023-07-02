@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <stringapiset.h>
 
 bool StringIsHex(
     std::string const& s
@@ -14,9 +15,13 @@ bool StringIsNumber(
 );
 
 void StringTokenize(
-    std::string const &str,
-    const char delim,
-    std::vector<std::string> &out
+    std::string const&        str,
+    const char                delim,
+    std::vector<std::string>& out
+);
+
+std::wstring StringAnsiToWide(
+    const std::string& str
 );
 
 #endif

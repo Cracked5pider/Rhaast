@@ -472,7 +472,7 @@ BOOL Rhaast::DispatchInput(
             } else if ( CallbackData.Type == DriverVerificationCallback ) {
                 type = "DriverVerification";
             } else {
-                spdlog::error( "received an invalid callback type: {}", CallbackData.Type );
+                spdlog::error( "received an invalid callback type: {:x}", ( BYTE ) CallbackData.Type );
                 FAIL_END
             }
 
@@ -485,6 +485,33 @@ BOOL Rhaast::DispatchInput(
             spdlog::error( "failed to query callback list" );
         }
 
+
+    } else if ( args[ 0 ] == "driver::load" ) {
+
+        RS_C_DRIVER_LOAD DriverLoad = { 0 };
+        std::string      Path       = { 0 };
+        std::wstring     WidePath   = { 0 };
+
+        /* check if enough args has been specified */
+        ARGS_CHECK_LEN( 1 )
+
+
+
+        /* send command to remove a callback */
+        if ( ( success = NT_SUCCESS( RhaastSend(
+                RHAAST_COMMAND_DRIVER_LOAD,
+                &DriverLoad,
+                sizeof( DriverLoad ),
+                &DriverLoad,
+                sizeof( DriverLoad )
+        ) ) ) ) {
+
+            spdlog::info( "Driver Loaded: " );
+            spdlog::info( " - Path        : {}  ", Path );
+            spdlog::info( " - Base Address: 0x{:p}", DriverLoad.DriverBase );
+            spdlog::info( " - Status      : 0x{:p}", DriverLoad.Status );
+
+        }
 
     } else {
 

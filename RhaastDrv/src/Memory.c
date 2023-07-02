@@ -31,7 +31,7 @@ PVOID RsMemAlloc(
 VOID RsMemFree(
     _In_ PVOID Memory
 ) {
-    
+    ExFreePool2( Memory, RS_POOL_TAG_RHST, NULL, 0 );
 }
 
 /**

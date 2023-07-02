@@ -14,9 +14,11 @@
 #include <Native.h>
 #include <Callbacks.h>
 #include <Types.h>
+#include <Map.h>
 
 /* Driver Instance struct */
-typedef struct _INSTANCE {
+typedef struct _INSTANCE
+{
     /* driver main object */
     PDRIVER_OBJECT  DriverObject;
     PUNICODE_STRING RegistryPath;

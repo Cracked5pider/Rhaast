@@ -117,7 +117,7 @@ PVOID RsLdrFunction(
     if ( ! ( Kernel = Instance.NtKrnlOs ) ) {
         return NULL; 
     }
-
+    
     /* parse header */
     NtHeader  = C_PTR( U_PTR( Kernel ) + ( ( PIMAGE_DOS_HEADER ) Kernel )->e_lfanew );
     ExportDir = C_PTR( U_PTR( Kernel ) + NtHeader->OptionalHeader.DataDirectory[ 0 ].VirtualAddress );
@@ -255,4 +255,111 @@ CLEANUP:
     }
 
     return NtStatus;
-} 
+}
+
+/**
+ * @brief
+ *      Reads a file into a specified allocated buffer.
+ *
+ * @param Path
+ *      Path to file to read ino Buffer
+ *
+ * @buffer Buffer
+ *      allocated buffer to write read file into.
+ *      if not specified then it is going to be ignored.
+ *
+ * @param Size
+ *      pointer to size of file
+ *
+ * @return
+ *      status of function 
+ */
+NTSTATUS RsReadFile(
+    _In_      LPWSTR  Path,
+    _Out_opt_ PVOID   Buffer,
+    _Out_     PSIZE_T Size
+) {
+    NTSTATUS                  NtStatus    = STATUS_SUCCESS;
+    HANDLE                    File        = NULL;
+    OBJECT_ATTRIBUTES         ObjAttr     = { 0 };
+    UNICODE_STRING            UniString   = { 0 };
+    IO_STATUS_BLOCK           StatusBlock = { 0 };
+    FILE_STANDARD_INFORMATION FileInfo    = { 0 };
+
+    /* check params */
+    if ( ( ! Path ) || ( ! Size ) ) {
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    /* initialize unicode string */
+    RtlInitUnicodeString( &UniString, ( PCWSTR ) Path );
+
+    /* initialize object attributes */
+    InitializeObjectAttributes( &ObjAttr, &UniString, OBJ_KERNEL_HANDLE, NULL, NULL )
+
+    /* open file */
+    if ( ! NT_SUCCESS( NtStatus = ZwCreateFile( 
+            &File, 
+            FILE_READ_DATA | SYNCHRONIZE, 
+            &ObjAttr, 
+            &StatusBlock, 
+            NULL, 
+            FILE_ATTRIBUTE_NORMAL, 
+            FILE_SHARE_READ, 
+            FILE_OPEN, 
+            FILE_SYNCHRONOUS_IO_ALERT, 
+            NULL, 
+            0
+    ) ) ) {
+        PRINTF( "ZwCreateFile Failed: %p\n", NtStatus )
+        goto END; 
+    }
+
+    /* query size of file */
+    if ( ! NT_SUCCESS( NtStatus = ZwQueryInformationFile( 
+            File, 
+            &StatusBlock, 
+            &FileInfo, 
+            sizeof( FileInfo ), 
+            FileStandardInformation 
+    ) ) ) {
+        PRINTF( "ZwQueryInformationFile Failed: %p\n", NtStatus )
+        goto END;
+    }
+
+    /* set size of file */
+    *Size = FileInfo.EndOfFile.QuadPart;  
+
+    /* if no buffer specified then end this */
+    if ( ! Buffer ) {
+        NtStatus = STATUS_SUCCESS;
+        goto END;
+    }
+
+    /* read file into buffer */
+    if ( ! NT_SUCCESS( NtStatus = ZwReadFile( 
+            File,
+            NULL, NULL, NULL,
+            &StatusBlock,
+            Buffer,
+            FileInfo.EndOfFile.LowPart, 
+            NULL, NULL
+    ) ) ) {
+        PRINTF( "ZwReadFile Failed: %p\n", NtStatus )
+        goto END;
+    }
+
+END:
+    if ( File ) {
+        NtClose( File );
+        File = NULL;
+    }
+
+    /* clear structs from memory */
+    RtlSecureZeroMemory( &FileInfo, sizeof( FileInfo ) );
+    RtlSecureZeroMemory( &StatusBlock, sizeof( StatusBlock ) );
+    RtlSecureZeroMemory( &ObjAttr, sizeof( ObjAttr ) );
+    RtlSecureZeroMemory( &UniString, sizeof( UniString ) );
+
+    return NtStatus;
+}
